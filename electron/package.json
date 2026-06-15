@@ -4,6 +4,8 @@
   "description": "amux — desktop app (Linux): parallel AI coding agents in a native window.",
   "main": "main.js",
   "license": "MIT",
+  "author": "Conrad Bachman",
+  "homepage": "https://github.com/Bradical247/amux",
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --linux AppImage deb --publish never"
