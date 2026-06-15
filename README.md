@@ -38,6 +38,10 @@ attach to from anywhere**.
   terminal view (`amux grid`), and a remote-reachable **web dashboard** (`amux web`).
 - ⚠️ **Conflict detection** — surfaces files touched by more than one agent *before*
   you merge, in the CLI and both dashboards.
+- 💸 **Usage & cost observability** — per-agent token counts, estimated cost, and
+  context-window fill (`amux usage` + the dashboards). Anthropic rates ship grounded;
+  any other LLM is priced via `~/.amux/config.json`. Set `--cost-cap`/`--ctx-cap` and
+  get a chime + Slack/webhook alert when an agent crosses it.
 - 🔀 **Merge / PR orchestration** — `amux merge` lands a branch (clean-aborts on
   conflict); `amux pr` pushes and opens a GitHub PR.
 - 📣 **Broadcast** — `amux broadcast` types the same prompt into many agents at once.
@@ -77,6 +81,8 @@ amux attach <name>
 amux kill <name> [--rm-worktree]
 amux notify [--name n] --status waiting --note "..."
 amux conflicts                       # files touched by >1 agent (merge collisions)
+amux usage [--json]                  # tokens, estimated cost, context-fill per agent + total
+amux report-usage [--name n] --model m --in N --out N --ctx N   # push usage (from agent hooks)
 amux broadcast [names...] -m "..."   # type a prompt into agents' sessions (all if no names)
 amux merge <name> [--into b] [--ff]  # merge an agent's branch into the base branch
 amux pr <name> [-t title] [--draft]  # push branch + open a GitHub PR (needs gh)
@@ -149,9 +155,20 @@ amux notify --status waiting --note "needs review"
 {
   "agents": {
     "claude-yolo": { "cmd": "claude --dangerously-skip-permissions" }
+  },
+  "pricing": {
+    "gpt-5": { "in": 1.25, "out": 10, "context": 400000 }
+  },
+  "integrations": {
+    "slackWebhook": "https://hooks.slack.com/services/…",
+    "webhook": "https://example.com/amux"
   }
 }
 ```
+
+`pricing` rates are USD per 1M tokens (`cacheRead`/`cacheWrite` optional, default to
+0.1× / 1.25× of `in`); built-in Anthropic models are grounded and need no entry — add
+entries for any other LLM you run. `integrations` receive cap-crossing alerts.
 
 State lives in `~/.amux/state.json`; worktrees in `~/.amux/worktrees/<repo>/<name>`.
 
@@ -167,6 +184,7 @@ State lives in `~/.amux/state.json`; worktrees in `~/.amux/worktrees/<repo>/<nam
 - [x] **Single-binary distribution** — `bun build --compile` ships a self-contained executable.
 - [x] **TUI: tiled live agent panes** — `amux grid` mirrors every live agent in a tiled, read-only view.
 - [x] **Web: create-agent form** — spawn agents from the dashboard.
+- [x] **Usage / cost / context observability** — `amux usage`, multi-LLM pricing, caps + Slack/webhook alerts.
 - [ ] **Go rewrite** — only if Bun's single-binary story proves insufficient.
 
 ## Architecture

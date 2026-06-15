@@ -1,6 +1,6 @@
 {
   "name": "amux-desktop",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "amux — desktop app (Linux): parallel AI coding agents in a native window.",
   "main": "main.js",
   "license": "MIT",

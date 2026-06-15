@@ -4,6 +4,7 @@
 // run it on the box where the agents live, open it from anywhere.
 import { randomUUID } from "node:crypto";
 import http from "node:http";
+import { emit as emitIntegration } from "../core/integrations";
 import * as mgr from "../core/manager";
 import { ensureTerminal, stopAllTerminals, stopTerminal } from "../core/terminals";
 import type { NewAgentOpts, Status } from "../core/types";
@@ -59,6 +60,25 @@ export async function startWeb(
   watcher.on("change", pushSnapshot);
   watcher.on("remove", pushSnapshot);
 
+  // Cost/context cap poller: fire a one-shot alert (SSE + integrations) the first
+  // time an agent crosses a cap.
+  const alerted = new Set<string>();
+  const capPoll = setInterval(async () => {
+    const rows = await mgr.usageAll().catch(() => []);
+    for (const r of rows) {
+      const key = r.overCost ? `${r.name}:cost` : r.overCtx ? `${r.name}:ctx` : "";
+      if (!key || alerted.has(key)) continue;
+      alerted.add(key);
+      const text = r.overCost
+        ? `amux: '${r.name}' hit its cost cap ($${r.usageView.costUSD?.toFixed(2)})`
+        : `amux: '${r.name}' hit its context cap (${r.usageView.ctxPct}%)`;
+      const frame = `event: alert\ndata: ${JSON.stringify({ name: r.name, text })}\n\n`;
+      for (const c of clients) c.write(frame);
+      void emitIntegration(text, r);
+    }
+  }, 8000);
+  capPoll.unref?.();
+
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
     const path = url.pathname;
@@ -80,6 +100,7 @@ export async function startWeb(
         return json(res, await mgr.agentKeys());
       if (req.method === "GET" && path === "/api/repo-check")
         return json(res, await mgr.checkRepo(url.searchParams.get("path") ?? "."));
+      if (req.method === "GET" && path === "/api/usage") return json(res, await mgr.usageAll());
 
       // Embedded terminal: ensure a ttyd is serving this agent, return its port.
       if (req.method === "GET" && path.startsWith("/api/term/")) {
@@ -141,6 +162,7 @@ export async function startWeb(
 
   server.on("close", () => {
     watcher.stop();
+    clearInterval(capPoll);
     stopAllTerminals();
   });
   await new Promise<void>((resolve) => server.listen(port, host, resolve));

@@ -1,5 +1,20 @@
 export type Status = "running" | "waiting" | "done" | "error" | "dead";
 
+export interface RawUsageCounts {
+  inTok: number;
+  outTok: number;
+  cacheRead: number;
+  cacheWrite: number;
+}
+
+/** Computed usage for an agent (tokens + cost + context fill). */
+export interface Usage extends RawUsageCounts {
+  model: string;
+  costUSD: number | null; // null when the model's price is unknown
+  ctxPct: number | null; // % of the model's context window currently in use
+  source: "transcript" | "push" | "none";
+}
+
 export interface Agent {
   name: string;
   repo: string; // abs path to main repo root
@@ -11,6 +26,12 @@ export interface Agent {
   createdAt: string;
   status: Status; // self-reported via `amux notify`; overridden to "dead" if session gone
   note: string; // last notification text
+  // Optional observability state:
+  usage?: RawUsageCounts; // last usage pushed via `amux report-usage`
+  usageModel?: string; // model reported alongside pushed usage
+  usageCtx?: number; // context tokens reported alongside pushed usage
+  costCap?: number; // alert when estimated cost (USD) crosses this
+  ctxCap?: number; // alert when context fill (%) crosses this
 }
 
 /** Agent enriched with live tmux liveness. */
@@ -24,10 +45,19 @@ export interface Conflict {
   agents: string[]; // agent names whose worktrees both touch this file
 }
 
+/** AgentView plus computed usage — what the usage surfaces consume. */
+export interface UsageView extends AgentView {
+  usageView: Usage;
+  overCost: boolean;
+  overCtx: boolean;
+}
+
 export interface NewAgentOpts {
   name: string;
   agent: string; // adapter key
   repo: string; // dir to resolve repo root from
   branch?: string;
   base?: string;
+  costCap?: number;
+  ctxCap?: number;
 }

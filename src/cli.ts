@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name("amux")
   .description("tmux-backed orchestrator for parallel AI coding agents")
-  .version("0.6.0");
+  .version("0.7.0");
 
 function fail(msg: string): never {
   console.error(`amux: ${msg}`);
@@ -56,6 +56,8 @@ program
   .option("-r, --repo <path>", "repo to branch from (default: cwd)")
   .option("-b, --branch <branch>", "branch name (default: amux/<name>)")
   .option("--base <ref>", "base ref for the new branch")
+  .option("--cost-cap <usd>", "alert when estimated cost crosses this (USD)")
+  .option("--ctx-cap <pct>", "alert when context fill crosses this (%)")
   .action((name: string, opts) =>
     guard(async () => {
       const a = await mgr.create({
@@ -64,6 +66,8 @@ program
         repo: opts.repo ?? process.cwd(),
         branch: opts.branch,
         base: opts.base,
+        costCap: opts.costCap ? Number(opts.costCap) : undefined,
+        ctxCap: opts.ctxCap ? Number(opts.ctxCap) : undefined,
       });
       console.log(
         `✓ '${a.name}' [${a.agent}] on ${a.branch}\n  ${a.worktree}\n  attach: amux attach ${a.name}`,
@@ -245,6 +249,64 @@ program
         console.log(`amux gui → open ${url}  (no Chromium/Chrome found for app mode)`);
       }
       console.log("  embedded terminals require ttyd on PATH");
+    }),
+  );
+
+program
+  .command("usage")
+  .description("token usage, estimated cost, and context fill per agent")
+  .option("--json", "output JSON")
+  .action((opts) =>
+    guard(async () => {
+      const rows = await mgr.usageAll();
+      if (opts.json) {
+        console.log(JSON.stringify(rows, null, 2));
+        return;
+      }
+      if (rows.length === 0) {
+        console.log("no agents");
+        return;
+      }
+      let total = 0;
+      for (const r of rows) {
+        const u = r.usageView;
+        if (u.costUSD != null) total += u.costUSD;
+        const cost = u.costUSD != null ? `$${u.costUSD.toFixed(4)}` : "—";
+        const ctx = u.ctxPct != null ? `${u.ctxPct}%` : "—";
+        const flags = `${r.overCost ? " ⚠$" : ""}${r.overCtx ? " ⚠ctx" : ""}`;
+        console.log(
+          `${r.name.padEnd(16)} ${(u.model || "?").padEnd(20)} in:${u.inTok} out:${u.outTok} ctx:${ctx} ${cost} [${u.source}]${flags}`,
+        );
+      }
+      console.log(`\ntotal estimated cost: $${total.toFixed(4)}`);
+    }),
+  );
+
+program
+  .command("report-usage")
+  .description("record an agent's token usage (call from agent hooks)")
+  .option("-n, --name <name>", "agent name (default: $AMUX_NAME)")
+  .option("-m, --model <model>", "model id (for cost lookup)")
+  .option("--in <n>", "input tokens", "0")
+  .option("--out <n>", "output tokens", "0")
+  .option("--cache-read <n>", "cache-read tokens", "0")
+  .option("--cache-write <n>", "cache-write tokens", "0")
+  .option("--ctx <n>", "current context tokens", "0")
+  .action((opts) =>
+    guard(async () => {
+      const name = opts.name ?? process.env.AMUX_NAME;
+      if (!name) fail("no agent name (set $AMUX_NAME or pass --name)");
+      await mgr.reportUsage(
+        name,
+        {
+          inTok: Number(opts.in),
+          outTok: Number(opts.out),
+          cacheRead: Number(opts.cacheRead),
+          cacheWrite: Number(opts.cacheWrite),
+        },
+        opts.model,
+        Number(opts.ctx) || undefined,
+      );
     }),
   );
 

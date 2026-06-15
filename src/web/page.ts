@@ -94,6 +94,7 @@ export const PAGE = /* html */ `<!doctype html>
   <div class="top">
     <span class="cur" id="cur">no agent selected</span>
     <span class="sp"></span>
+    <span id="totalcost" style="color:var(--mut);font-size:12px"></span>
     <input id="bcast" placeholder="broadcast to agent…" />
     <button id="bcastbtn">send</button>
     <button id="mergebtn">merge</button>
@@ -137,7 +138,7 @@ function postJSON(p,b){return api(p,{method:'POST',headers:{'content-type':'appl
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 const $=id=>document.getElementById(id);
 
-let agents=[],selected=null,conflicted=new Set(),prevStatus={};
+let agents=[],selected=null,conflicted=new Set(),prevStatus={},usage={};
 
 /* ---- sound + notifications ---- */
 let SOUND=localStorage.getItem('amux_sound')!=='off';
@@ -172,8 +173,17 @@ function renderList(){
       <span class="meta">
         <div class="nm">\${esc(a.name)} \${conflicted.has(a.name)?'<span class="warn">⚠</span>':''}</div>
         <div class="sub">\${esc(a.status)} · \${esc(a.branch)}\${a.note?' · '+esc(a.note):''}</div>
+        \${usageLine(a.name)}
       </span>
     </div>\`).join('')||'<div style="color:var(--mut);padding:14px">no agents yet — press <b>n</b></div>';
+}
+function usageLine(name){
+  const r=usage[name]; if(!r)return '';
+  const u=r.usageView; if(u.source==='none')return '';
+  const cost=u.costUSD!=null?('$'+u.costUSD.toFixed(3)):'';
+  const ctx=u.ctxPct!=null?(' · '+u.ctxPct+'% ctx'):'';
+  const warn=(r.overCost||r.overCtx)?' <span class="warn">⚠</span>':'';
+  return \`<div class="sub" style="color:var(--cyn)">\${(u.inTok+u.outTok).toLocaleString()} tok\${ctx} \${cost}\${warn}</div>\`;
 }
 async function select(name){
   selected=name;const a=agents.find(x=>x.name===name);
@@ -263,12 +273,22 @@ function onSnapshot(list){
   document.title=(w?'('+w+') ':'')+'amux';
 }
 
+async function loadUsage(){
+  try{
+    const rows=await (await api('/api/usage')).json();
+    usage={};let total=0;
+    for(const r of rows){usage[r.name]=r;if(r.usageView&&r.usageView.costUSD!=null)total+=r.usageView.costUSD;}
+    $('totalcost').textContent=total>0?('total ~$'+total.toFixed(3)):'';
+    renderList();
+  }catch(e){}
+}
 async function boot(){
   const keys=await (await api('/api/agent-keys')).json();
   $('f_agent').innerHTML=keys.map(k=>\`<option>\${esc(k)}</option>\`).join('');
   agents=await (await api('/api/agents')).json();
   agents.forEach(a=>prevStatus[a.name]=a.status); // seed, don't chime existing
-  renderList();await loadConflicts();onSnapshot(agents);
+  renderList();await loadConflicts();onSnapshot(agents);await loadUsage();
+  setInterval(loadUsage,6000);
   const ev=new EventSource('/api/events'+Q);
   ev.onopen=()=>$('live').classList.add('live');
   ev.onerror=()=>$('live').classList.remove('live');
@@ -276,6 +296,9 @@ async function boot(){
     agents=JSON.parse(e.data);
     if(selected&&!agents.find(a=>a.name===selected)){selected=null;$('term').style.display='none';$('empty').style.display='flex';}
     loadConflicts();onSnapshot(agents);
+  });
+  ev.addEventListener('alert',e=>{
+    const a=JSON.parse(e.data);beep(CHIME.error);notify('amux alert',a.text);toast(a.text,'err');loadUsage();
   });
 }
 boot();

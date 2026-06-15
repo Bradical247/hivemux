@@ -3,6 +3,21 @@
 All notable changes to amux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
+## [0.7.0]
+
+### Added
+- **Observability**: `amux usage` — token counts, estimated cost, and
+  context-window fill per agent, plus a total. Surfaced in the web dashboard
+  (per-agent line + total). New `/api/usage` endpoint.
+- **Multi-LLM, honest pricing**: built-in Anthropic rates are grounded; any
+  other model/provider is config-driven via `~/.amux/config.json` → `pricing`.
+  Unknown models show cost as "—" rather than a guessed number.
+- **Two usage sources**: parse Claude Code's JSONL transcript (zero setup) or
+  push from a hook via `amux report-usage` (agent-agnostic, any LLM).
+- **Cost / context caps**: `amux new --cost-cap <usd> --ctx-cap <pct>`; crossing
+  a cap fires a chime + toast + desktop notification and posts to Slack / a
+  generic webhook (`~/.amux/config.json` → `integrations`).
+
 ## [0.6.0]
 
 ### Added

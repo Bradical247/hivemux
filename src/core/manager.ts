@@ -16,9 +16,11 @@ import {
   repoName,
   repoRoot,
 } from "./git";
+import type { RawUsage } from "./pricing";
 import * as store from "./store";
 import { buildGrid, killSession, newSession, sendKeys, sessionExists } from "./tmux";
-import type { Agent, AgentView, Conflict, NewAgentOpts } from "./types";
+import type { Agent, AgentView, Conflict, NewAgentOpts, UsageView } from "./types";
+import { agentUsage } from "./usage";
 
 export class AmuxError extends Error {}
 
@@ -72,6 +74,8 @@ export async function create(opts: NewAgentOpts): Promise<Agent> {
     createdAt: new Date().toISOString(),
     status: "running",
     note: "",
+    costCap: opts.costCap,
+    ctxCap: opts.ctxCap,
   };
   await store.put(agent);
   return agent;
@@ -200,4 +204,29 @@ export async function grid(): Promise<number> {
   }
   await buildGrid(GRID_SESSION, live);
   return live.length;
+}
+
+/** Record usage pushed by an agent hook (`amux report-usage`). */
+export async function reportUsage(
+  name: string,
+  raw: RawUsage,
+  model?: string,
+  ctxTokens?: number,
+): Promise<void> {
+  if (!(await store.get(name))) throw new AmuxError(`unknown agent '${name}'`);
+  await store.update(name, { usage: raw, usageModel: model, usageCtx: ctxTokens });
+}
+
+/** All agents enriched with computed usage (tokens/cost/context) + cap flags. */
+export async function usageAll(): Promise<UsageView[]> {
+  const views = await list();
+  return Promise.all(
+    views.map(async (v) => {
+      const usageView = await agentUsage(v);
+      const overCost =
+        v.costCap != null && usageView.costUSD != null && usageView.costUSD >= v.costCap;
+      const overCtx = v.ctxCap != null && usageView.ctxPct != null && usageView.ctxPct >= v.ctxCap;
+      return { ...v, usageView, overCost, overCtx };
+    }),
+  );
 }
