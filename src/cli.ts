@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name("amux")
   .description("tmux-backed orchestrator for parallel AI coding agents")
-  .version("0.5.0");
+  .version("0.6.0");
 
 function fail(msg: string): never {
   console.error(`amux: ${msg}`);

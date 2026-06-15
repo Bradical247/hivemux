@@ -78,6 +78,8 @@ export async function startWeb(
         return json(res, await mgr.conflicts());
       if (req.method === "GET" && path === "/api/agent-keys")
         return json(res, await mgr.agentKeys());
+      if (req.method === "GET" && path === "/api/repo-check")
+        return json(res, await mgr.checkRepo(url.searchParams.get("path") ?? "."));
 
       // Embedded terminal: ensure a ttyd is serving this agent, return its port.
       if (req.method === "GET" && path.startsWith("/api/term/")) {

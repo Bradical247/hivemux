@@ -6,12 +6,14 @@ import {
   addWorktree,
   changedFiles,
   createPR,
+  currentBranch,
   defaultBranch,
   ghAvailable,
   type MergeResult,
   mergeInto,
   pushBranch,
   removeWorktree,
+  repoName,
   repoRoot,
 } from "./git";
 import * as store from "./store";
@@ -167,6 +169,24 @@ export async function merge(name: string, opts: MergeOpts = {}): Promise<MergeRe
   if (!a) throw new AmuxError(`unknown agent '${name}'`);
   const into = opts.into ?? (await defaultBranch(a.repo));
   return mergeInto(a.repo, a.branch, into, opts.noFf ?? true);
+}
+
+export interface RepoCheck {
+  valid: boolean;
+  root?: string;
+  name?: string;
+  branch?: string;
+  error?: string;
+}
+
+/** Validate a path as a git repo — used by the GUI to preview before creating. */
+export async function checkRepo(dir: string): Promise<RepoCheck> {
+  try {
+    const root = await repoRoot(dir || ".");
+    return { valid: true, root, name: repoName(root), branch: await currentBranch(root) };
+  } catch {
+    return { valid: false, error: "not inside a git repository" };
+  }
 }
 
 export const GRID_SESSION = "amux-grid";

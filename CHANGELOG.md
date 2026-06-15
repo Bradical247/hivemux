@@ -3,6 +3,20 @@
 All notable changes to amux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
+## [0.6.0]
+
+### Added
+- Next-level GUI create-agent flow: **live repo validation** + branch preview
+  (`GET /api/repo-check`), a **repo picker** (datalist of known repos), collapsible
+  **advanced** branch/base, a real **creating-state** (spinner + await, no race),
+  and inline name/duplicate validation.
+- **Sound chimes** (Web Audio, synthesized) on agent waiting/done/error, with a
+  persisted mute toggle.
+- **Desktop notifications** on status changes (permission-gated).
+- **Keyboard shortcuts** (`n` = new agent, `Esc` = close), Esc/click-out modal.
+- **Toasts** for actions (create/merge/PR/broadcast/kill) replacing alerts;
+  **waiting-count badge** in the window title.
+
 ## [0.5.0]
 
 ### Added
