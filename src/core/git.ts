@@ -52,3 +52,96 @@ export async function changedFiles(worktree: string): Promise<string[]> {
     return [];
   }
 }
+
+export async function currentBranch(dir: string): Promise<string> {
+  const { stdout } = await pexec("git", ["-C", dir, "rev-parse", "--abbrev-ref", "HEAD"]);
+  return stdout.trim();
+}
+
+/** The repo's integration branch: origin/HEAD if set, else main/master, else current. */
+export async function defaultBranch(root: string): Promise<string> {
+  try {
+    const { stdout } = await pexec("git", [
+      "-C",
+      root,
+      "symbolic-ref",
+      "--short",
+      "refs/remotes/origin/HEAD",
+    ]);
+    return stdout.trim().replace(/^origin\//, "");
+  } catch {
+    for (const b of ["main", "master"]) {
+      try {
+        await pexec("git", ["-C", root, "rev-parse", "--verify", b]);
+        return b;
+      } catch {
+        /* not present */
+      }
+    }
+    return currentBranch(root);
+  }
+}
+
+export async function pushBranch(
+  worktree: string,
+  branch: string,
+  remote = "origin",
+): Promise<void> {
+  await pexec("git", ["-C", worktree, "push", "-u", remote, branch]);
+}
+
+export interface MergeResult {
+  merged: boolean;
+  into: string;
+  conflicts: string[];
+}
+
+/**
+ * Check out `into` in the main repo and merge `branch`. On conflict, collect the
+ * conflicted paths and `merge --abort` so the working tree is left clean rather
+ * than half-merged — amux reports, the human resolves.
+ */
+export async function mergeInto(
+  root: string,
+  branch: string,
+  into: string,
+  noFf = true,
+): Promise<MergeResult> {
+  await pexec("git", ["-C", root, "checkout", into]);
+  try {
+    await pexec("git", ["-C", root, "merge", noFf ? "--no-ff" : "--ff", branch]);
+    return { merged: true, into, conflicts: [] };
+  } catch {
+    let conflicts: string[] = [];
+    try {
+      const { stdout } = await pexec("git", ["-C", root, "diff", "--name-only", "--diff-filter=U"]);
+      conflicts = stdout.split("\n").filter(Boolean);
+    } catch {
+      /* ignore */
+    }
+    await pexec("git", ["-C", root, "merge", "--abort"]).catch(() => {});
+    return { merged: false, into, conflicts };
+  }
+}
+
+export async function ghAvailable(): Promise<boolean> {
+  try {
+    await pexec("gh", ["--version"]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Open a GitHub PR from `worktree`'s branch via the `gh` CLI; returns the PR URL. */
+export async function createPR(
+  worktree: string,
+  title: string,
+  body: string,
+  draft: boolean,
+): Promise<string> {
+  const args = ["pr", "create", "--title", title, "--body", body];
+  if (draft) args.push("--draft");
+  const { stdout } = await pexec("gh", args, { cwd: worktree });
+  return stdout.trim();
+}

@@ -58,6 +58,11 @@ export const PAGE = /* html */ `<!doctype html>
   </div>
 </main>
 <script>
+const TOKEN="__AMUX_TOKEN__";
+const AUTH=TOKEN?{'x-amux-token':TOKEN}:{};
+const Q=TOKEN?('?token='+encodeURIComponent(TOKEN)):'';
+if(TOKEN&&location.search){history.replaceState(null,'',location.pathname);}
+function api(p,o){o=o||{};o.headers=Object.assign({},o.headers||{},AUTH);return fetch(p,o);}
 const BADGE={running:'b-running',waiting:'b-waiting',done:'b-done',error:'b-error',dead:'b-dead'};
 let agents=[];
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
@@ -81,7 +86,7 @@ function render(){
   g.innerHTML=agents.length?agents.map(card).join(''):'<div class="empty">no agents — amux new &lt;name&gt;</div>';
 }
 async function loadConflicts(){
-  const cs=await (await fetch('/api/conflicts')).json();
+  const cs=await (await api('/api/conflicts')).json();
   conflicted=new Set(cs.flatMap(c=>c.agents));
   const wrap=document.getElementById('cwrap');
   wrap.style.display=cs.length?'block':'none';
@@ -90,13 +95,13 @@ async function loadConflicts(){
   render();
 }
 async function kill(name,rm){
-  await fetch('/api/kill',{method:'POST',headers:{'content-type':'application/json'},
+  await api('/api/kill',{method:'POST',headers:{'content-type':'application/json'},
     body:JSON.stringify({name,rmWorktree:rm})});
 }
 async function boot(){
-  agents=await (await fetch('/api/agents')).json();
+  agents=await (await api('/api/agents')).json();
   await loadConflicts();
-  const ev=new EventSource('/api/events');
+  const ev=new EventSource('/api/events'+Q);
   ev.onopen=()=>document.getElementById('live').classList.add('live');
   ev.onerror=()=>document.getElementById('live').classList.remove('live');
   ev.addEventListener('snapshot',e=>{agents=JSON.parse(e.data);loadConflicts();});

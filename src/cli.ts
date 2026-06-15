@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name("amux")
   .description("tmux-backed orchestrator for parallel AI coding agents")
-  .version("0.1.0");
+  .version("0.3.0");
 
 function fail(msg: string): never {
   console.error(`amux: ${msg}`);
@@ -117,6 +117,52 @@ program
   );
 
 program
+  .command("broadcast [names...]")
+  .description("send a prompt to agents' sessions (no names = all live agents)")
+  .requiredOption("-m, --message <text>", "text to type into each session")
+  .action((names: string[], opts) =>
+    guard(async () => {
+      const sent = await mgr.broadcast(names, opts.message);
+      console.log(sent.length ? `✓ sent to: ${sent.join(", ")}` : "no live agents to send to");
+    }),
+  );
+
+program
+  .command("pr <name>")
+  .description("push the agent's branch and open a GitHub PR (needs gh)")
+  .option("-t, --title <title>", "PR title (default: branch name)")
+  .option("--body <text>", "PR body")
+  .option("--draft", "open as a draft PR")
+  .action((name: string, opts) =>
+    guard(async () => {
+      const url = await mgr.openPr(name, {
+        title: opts.title,
+        body: opts.body,
+        draft: Boolean(opts.draft),
+      });
+      console.log(`✓ ${url}`);
+    }),
+  );
+
+program
+  .command("merge <name>")
+  .description("merge an agent's branch into the base branch")
+  .option("--into <branch>", "target branch (default: repo's integration branch)")
+  .option("--ff", "allow fast-forward merge (default: --no-ff)")
+  .action((name: string, opts) =>
+    guard(async () => {
+      const r = await mgr.merge(name, { into: opts.into, noFf: !opts.ff });
+      if (r.merged) {
+        console.log(`✓ merged '${name}' into ${r.into}`);
+        return;
+      }
+      console.error(`✗ merge into ${r.into} hit conflicts (aborted — repo left clean):`);
+      for (const f of r.conflicts) console.error(`   ${f}`);
+      process.exit(1);
+    }),
+  );
+
+program
   .command("dash")
   .description("live full-screen TUI dashboard")
   .action(() =>
@@ -131,12 +177,15 @@ program
   .description("serve the web dashboard")
   .option("-p, --port <port>", "port", "7878")
   .option("--host <host>", "bind host (0.0.0.0 to expose)", "127.0.0.1")
+  .option("--token <token>", "require this bearer token (auto-generated if exposed)")
   .action((opts) =>
     guard(async () => {
       const { startWeb } = await import("./web/server");
       const port = Number(opts.port);
-      await startWeb(port, opts.host);
-      console.log(`amux web → http://${opts.host}:${port}`);
+      const { token } = await startWeb(port, opts.host, opts.token);
+      const q = token ? `?token=${token}` : "";
+      console.log(`amux web → http://${opts.host}:${port}/${q}`);
+      if (token) console.log(`  auth token: ${token}`);
     }),
   );
 

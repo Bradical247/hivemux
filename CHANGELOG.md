@@ -3,17 +3,25 @@
 All notable changes to amux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
-## [Unreleased]
+## [0.3.0]
 
 ### Added
+- `amux broadcast [names...] -m "..."` — type the same prompt into many agents
+  (all live agents if no names given).
+- `amux merge <name> [--into b] [--ff]` — merge an agent's branch into the base
+  branch; on conflict it collects the paths and `merge --abort`s, leaving the repo
+  clean for the human to resolve.
+- `amux pr <name> [-t title] [--draft]` — push the branch and open a GitHub PR via `gh`.
+- **Web dashboard auth** — `--token` (or auto-minted when bound beyond loopback);
+  enforced via `?token=` query or `x-amux-token` header, injected into the page.
+- **CI** (`.github/workflows/ci.yml`): Bun setup → `bun run check` → build → binary smoke.
 - Adopted cmux's TypeScript engineering standards: Biome (lint + format), strict
   tsconfig (`noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch`,
   `forceConsistentCasingInFileNames`, `verbatimModuleSyntax`, `isolatedModules`).
-- **Bun toolchain** to match cmux: `bun` runtime, `bun test` (+ first unit test
+- **Bun toolchain** to match cmux: `bun` runtime, `bun test` (+ unit test
   `core/agents.test.ts`), `bun build --compile` single standalone binary.
 - `CONTRIBUTING.md`, `CHANGELOG.md`, `CLAUDE.md` (+ `AGENTS.md` symlink), and
   `docs/cmux-standards-review.md`.
-- `bun run check` / `lint` / `lint:fix` / `format` / `typecheck` scripts.
 
 ### Changed
 - Migrated off Node/`tsc`-build to Bun: `moduleResolution: bundler`, bare relative

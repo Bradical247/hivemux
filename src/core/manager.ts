@@ -2,9 +2,20 @@
 // calls these functions. No frontend talks to tmux/git/store directly, so there
 // is exactly one source of truth and one place to evolve behavior.
 import { agentKeys as _agentKeys, resolveAgent } from "./agents";
-import { addWorktree, changedFiles, removeWorktree, repoRoot } from "./git";
+import {
+  addWorktree,
+  changedFiles,
+  createPR,
+  defaultBranch,
+  ghAvailable,
+  type MergeResult,
+  mergeInto,
+  pushBranch,
+  removeWorktree,
+  repoRoot,
+} from "./git";
 import * as store from "./store";
-import { killSession, newSession, sessionExists } from "./tmux";
+import { killSession, newSession, sendKeys, sessionExists } from "./tmux";
 import type { Agent, AgentView, Conflict, NewAgentOpts } from "./types";
 
 export class AmuxError extends Error {}
@@ -109,4 +120,51 @@ export async function conflicts(): Promise<Conflict[]> {
   return [...map.values()]
     .filter((e) => e.agents.size > 1)
     .map((e) => ({ repo: e.repo, file: e.file, agents: [...e.agents].sort() }));
+}
+
+/**
+ * Send the same text to one or more agents' sessions (empty list = all live
+ * agents). Dead sessions are skipped. Returns the names actually delivered to.
+ */
+export async function broadcast(names: string[], text: string): Promise<string[]> {
+  const targets = names.length ? names : (await store.getAll()).map((a) => a.name);
+  const sent: string[] = [];
+  for (const name of targets) {
+    const a = await store.get(name);
+    if (!a) throw new AmuxError(`unknown agent '${name}'`);
+    if (!(await sessionExists(a.session))) continue;
+    await sendKeys(a.session, text);
+    sent.push(name);
+  }
+  return sent;
+}
+
+export interface PrOpts {
+  title?: string;
+  body?: string;
+  draft?: boolean;
+}
+
+/** Push the agent's branch and open a GitHub PR; returns the PR URL. */
+export async function openPr(name: string, opts: PrOpts = {}): Promise<string> {
+  const a = await store.get(name);
+  if (!a) throw new AmuxError(`unknown agent '${name}'`);
+  if (!(await ghAvailable())) throw new AmuxError("gh CLI not found (needed to open PRs)");
+  await pushBranch(a.worktree, a.branch);
+  const title = opts.title ?? a.branch;
+  const body = opts.body ?? `Opened by amux for agent '${a.name}'.`;
+  return createPR(a.worktree, title, body, Boolean(opts.draft));
+}
+
+export interface MergeOpts {
+  into?: string;
+  noFf?: boolean;
+}
+
+/** Merge an agent's branch into the base branch (default: repo's integration branch). */
+export async function merge(name: string, opts: MergeOpts = {}): Promise<MergeResult> {
+  const a = await store.get(name);
+  if (!a) throw new AmuxError(`unknown agent '${name}'`);
+  const into = opts.into ?? (await defaultBranch(a.repo));
+  return mergeInto(a.repo, a.branch, into, opts.noFf ?? true);
 }

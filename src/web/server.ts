@@ -2,6 +2,7 @@
 // works without the daemon. Pushes a full snapshot to browsers over SSE on every
 // change/tick. This is the remote-reachable control plane cmux can't offer:
 // run it on the box where the agents live, open it from anywhere.
+import { randomUUID } from "node:crypto";
 import http from "node:http";
 import * as mgr from "../core/manager";
 import type { NewAgentOpts, Status } from "../core/types";
@@ -12,6 +13,14 @@ function json(res: http.ServerResponse, body: unknown, code = 200): void {
   const s = JSON.stringify(body);
   res.writeHead(code, { "content-type": "application/json" });
   res.end(s);
+}
+
+const LOOPBACK = new Set(["127.0.0.1", "localhost", "::1"]);
+
+/** No token configured = open (loopback only). Otherwise require it via header or query. */
+function authed(req: http.IncomingMessage, url: URL, token: string | undefined): boolean {
+  if (!token) return true;
+  return req.headers["x-amux-token"] === token || url.searchParams.get("token") === token;
 }
 
 function readBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
@@ -28,7 +37,15 @@ function readBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
   });
 }
 
-export async function startWeb(port: number, host: string): Promise<http.Server> {
+export async function startWeb(
+  port: number,
+  host: string,
+  token?: string,
+): Promise<{ server: http.Server; token: string | undefined }> {
+  // Never serve an exposed (non-loopback) dashboard without auth: mint a token.
+  let authToken = token ?? process.env.AMUX_WEB_TOKEN;
+  if (!authToken && !LOOPBACK.has(host)) authToken = randomUUID();
+
   const clients = new Set<http.ServerResponse>();
   const watcher = new Watcher().start();
 
@@ -45,9 +62,15 @@ export async function startWeb(port: number, host: string): Promise<http.Server>
     const url = new URL(req.url ?? "/", "http://localhost");
     const path = url.pathname;
     try {
+      if (!authed(req, url, authToken)) {
+        res.writeHead(401, { "content-type": "text/plain" });
+        return res.end("unauthorized: append ?token=… or send an x-amux-token header");
+      }
       if (req.method === "GET" && path === "/") {
+        // Inject the token so the page's fetch/SSE calls carry it.
+        const page = PAGE.replace('"__AMUX_TOKEN__"', JSON.stringify(authToken ?? ""));
         res.writeHead(200, { "content-type": "text/html" });
-        return res.end(PAGE);
+        return res.end(page);
       }
       if (req.method === "GET" && path === "/api/agents") return json(res, await mgr.list());
       if (req.method === "GET" && path === "/api/conflicts")
@@ -95,5 +118,5 @@ export async function startWeb(port: number, host: string): Promise<http.Server>
 
   server.on("close", () => watcher.stop());
   await new Promise<void>((resolve) => server.listen(port, host, resolve));
-  return server;
+  return { server, token: authToken };
 }

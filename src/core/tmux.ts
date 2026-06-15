@@ -32,6 +32,11 @@ export async function killSession(name: string): Promise<void> {
   if (await sessionExists(name)) await pexec("tmux", ["kill-session", "-t", name]);
 }
 
+/** Type text into a session and press Enter — used by `broadcast`. */
+export async function sendKeys(session: string, text: string): Promise<void> {
+  await pexec("tmux", ["send-keys", "-t", session, text, "Enter"]);
+}
+
 export async function listSessionNames(): Promise<string[]> {
   try {
     const { stdout } = await pexec("tmux", ["list-sessions", "-F", "#{session_name}"]);

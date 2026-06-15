@@ -39,12 +39,19 @@ amux attach <name>
 amux kill <name> [--rm-worktree]
 amux notify [--name n] --status waiting --note "..."
 amux conflicts                       # files touched by >1 agent (merge collisions)
+amux broadcast [names...] -m "..."   # type a prompt into agents' sessions (all if no names)
+amux merge <name> [--into b] [--ff]  # merge an agent's branch into the base branch
+amux pr <name> [-t title] [--draft]  # push branch + open a GitHub PR (needs gh)
 amux dash                            # live full-screen TUI
-amux web [--port 7878] [--host 0.0.0.0]   # web dashboard, SSE live updates
+amux web [--port 7878] [--host 0.0.0.0] [--token t]   # web dashboard, SSE live updates
 amux daemon                          # control-plane daemon (event push, remote API)
 amux watch                           # stream live status from the daemon
 amux agents
 ```
+
+Exposing the web dashboard beyond loopback (`--host 0.0.0.0`) auto-generates an auth
+token if you don't pass `--token`; the printed URL includes it (`?token=…`), and the
+API also accepts an `x-amux-token` header.
 
 ## Install
 
@@ -105,11 +112,13 @@ State lives in `~/.amux/state.json`; worktrees in `~/.amux/worktrees/<repo>/<nam
 - [x] **Web dashboard** — remote-accessible UI + SSE; the cmux experience, reachable from anywhere.
 - [x] **Conflict detection** — flag files touched by more than one agent before you merge.
 - [x] **Socket/JSON API** — daemon control plane with event push (cmux parity).
-- [ ] **Merge/PR orchestration** — one command to land a finished agent's branch (push, open PR).
-- [ ] **`amux broadcast`** — send the same instruction to N agents at once.
+- [x] **Merge/PR orchestration** — `amux merge` (clean-abort on conflict) and `amux pr` (push + `gh pr create`).
+- [x] **`amux broadcast`** — send the same instruction to N agents at once.
+- [x] **Web auth** — token required (auto-minted) whenever the dashboard binds beyond loopback.
+- [x] **Single-binary distribution** — `bun build --compile` ships a self-contained executable.
 - [ ] **TUI: tiled live agent panes** (currently a status table + attach).
-- [ ] **Web: create-agent form + auth** before binding `--host 0.0.0.0` in the open.
-- [ ] **Go rewrite (single static binary)** once the design settles.
+- [ ] **Web: create-agent form** in the dashboard UI.
+- [ ] **Go rewrite** — only if Bun's single-binary story proves insufficient.
 
 ## Architecture
 
