@@ -1,0 +1,47 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Build amux binary
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+
+      - name: Stage native resources (amux + ttyd)
+        run: |
+          mkdir -p electron/resources
+          cp dist/amux electron/resources/amux
+          curl -fsSL https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64 -o electron/resources/ttyd
+          chmod +x electron/resources/amux electron/resources/ttyd
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Package desktop installers (AppImage + deb)
+        working-directory: electron
+        run: |
+          npm install
+          npx electron-builder --linux AppImage deb --publish never
+
+      - name: Publish installers to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            electron/dist/*.AppImage
+            electron/dist/*.deb

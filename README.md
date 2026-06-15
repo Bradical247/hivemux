@@ -95,6 +95,15 @@ API also accepts an `x-amux-token` header.
 
 ## Install
 
+### Desktop app (Linux)
+
+Grab the **AppImage** or **`.deb`** from
+[Releases](https://github.com/Bradical247/amux/releases/latest) — a real desktop
+app (cmux-style window) that bundles `amux` + `ttyd`, nothing else to install.
+Built by CI on each tagged release (`electron/`).
+
+### CLI / from source
+
 ```bash
 git clone https://github.com/Bradical247/amux && cd amux
 bun install

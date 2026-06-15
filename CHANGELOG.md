@@ -14,6 +14,9 @@ All notable changes to amux are documented here. Format loosely follows
   `POST /api/broadcast`, `POST /api/merge`, `POST /api/pr`.
 - `core/terminals.ts` — on-demand ttyd lifecycle (loopback-bound, torn down on
   kill / server stop).
+- **Desktop installers** — `electron/` packages the app as an AppImage + `.deb`
+  (bundles `amux` + `ttyd`); a tagged release (`release.yml`) builds and publishes
+  them to the GitHub Release.
 
 ## [0.4.0]
 

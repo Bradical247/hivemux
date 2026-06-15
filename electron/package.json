@@ -1,0 +1,31 @@
+{
+  "name": "amux-desktop",
+  "version": "0.5.0",
+  "description": "amux — desktop app (Linux): parallel AI coding agents in a native window.",
+  "main": "main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --linux AppImage deb --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "io.amux.desktop",
+    "productName": "amux",
+    "files": ["main.js", "icon.png"],
+    "extraResources": [
+      { "from": "resources/amux", "to": "amux" },
+      { "from": "resources/ttyd", "to": "ttyd" }
+    ],
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Development",
+      "icon": "icon.png",
+      "maintainer": "Conrad Bachman <108717148+Bradical247@users.noreply.github.com>",
+      "description": "Linux-native, tmux-backed orchestrator for parallel AI coding agents."
+    }
+  }
+}
