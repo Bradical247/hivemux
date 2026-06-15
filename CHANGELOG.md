@@ -12,6 +12,8 @@ All notable changes to amux are documented here. Format loosely follows
 - Web dashboard **create-agent form** — name + adapter (from `/api/agent-keys`) +
   repo path, POSTed to `/api/new`.
 - Conflict count surfaced in the TUI header and the web header (not just the list).
+- Branding: SVG logo + banner (`assets/`), README hero with badges, and a VHS
+  tape (`demo/amux.tape`) to render the terminal demo GIF.
 
 ## [0.3.0]
 

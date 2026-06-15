@@ -1,6 +1,19 @@
-# amux
+<div align="center">
+
+<img src="assets/banner.svg" alt="amux" width="660" />
 
 **A Linux-native, tmux-backed orchestrator for parallel AI coding agents.**
+
+[![CI](https://github.com/Bradical247/amux/actions/workflows/ci.yml/badge.svg)](https://github.com/Bradical247/amux/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-3fb950.svg)](LICENSE)
+![Runtime: Bun](https://img.shields.io/badge/runtime-Bun-f9f1e1?logo=bun&logoColor=black)
+![Built on tmux](https://img.shields.io/badge/built%20on-tmux-1BB91F?logo=tmux&logoColor=white)
+
+</div>
+
+<!-- Demo GIF — render with `vhs demo/amux.tape`, then uncomment:
+<p align="center"><img src="assets/demo.gif" alt="amux demo" width="760" /></p>
+-->
 
 Run many coding agents (Claude Code, Codex, Gemini, Aider, …) at once — each in
 its own isolated git worktree and tmux session — and manage them all from one
