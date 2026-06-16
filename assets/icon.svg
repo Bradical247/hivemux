@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none" role="img" aria-label="hivemux">
+  <rect width="512" height="512" rx="112" fill="#0d1117"/>
+  <rect x="2" y="2" width="508" height="508" rx="110" stroke="#30363d" stroke-width="4"/>
+  <path d="M188.0,256.0L222.0,197.1L290.0,197.1L324.0,256.0L290.0,314.9L222.0,314.9Z" fill="#3fb950" fill-opacity="0.92" stroke="#3fb950" stroke-width="4"/>
+  <path d="M296.1,318.4L330.1,259.5L398.1,259.5L432.1,318.4L398.1,377.3L330.1,377.3Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="4"/>
+  <path d="M296.1,193.6L330.1,134.7L398.1,134.7L432.1,193.6L398.1,252.5L330.1,252.5Z" fill="#3fb950" fill-opacity="0.92" stroke="#3fb950" stroke-width="4"/>
+  <path d="M79.9,318.4L113.9,259.5L181.9,259.5L215.9,318.4L181.9,377.3L113.9,377.3Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="4"/>
+  <path d="M79.9,193.6L113.9,134.7L181.9,134.7L215.9,193.6L181.9,252.5L113.9,252.5Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="4"/>
+  <path d="M188.0,380.8L222.0,322.0L290.0,322.0L324.0,380.8L290.0,439.7L222.0,439.7Z" fill="#3fb950" fill-opacity="0.92" stroke="#3fb950" stroke-width="4"/>
+  <path d="M188.0,131.2L222.0,72.3L290.0,72.3L324.0,131.2L290.0,190.0L222.0,190.0Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="4"/>
+</svg>

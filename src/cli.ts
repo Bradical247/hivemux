@@ -10,11 +10,31 @@ import type { AgentView, Status } from "./core/types";
 import { DaemonClient } from "./ipc/client";
 import { startDaemon } from "./ipc/server";
 
+const VERSION = "1.4.0";
+
+/** ASCII honeycomb mark. Green only when stdout is a TTY (keeps pipes clean). */
+function banner(): string {
+  const tty = process.stdout.isTTY;
+  const g = tty ? "\x1b[38;5;71m" : "";
+  const b = tty ? "\x1b[1m" : "";
+  const r = tty ? "\x1b[0m" : "";
+  const d = tty ? "\x1b[2m" : "";
+  return [
+    `${g}   __    __${r}`,
+    `${g}  /  \\__/  \\${r}    ${b}hivemux${r} ${d}v${VERSION}${r}`,
+    `${g}  \\__/  \\__/${r}    ${d}tmux-backed orchestrator${r}`,
+    `${g}  /  \\__/  \\${r}    ${d}for parallel AI coding agents${r}`,
+    `${g}  \\__/  \\__/${r}`,
+    "",
+  ].join("\n");
+}
+
 const program = new Command();
 program
   .name("hivemux")
   .description("tmux-backed orchestrator for parallel AI coding agents")
-  .version("1.4.0");
+  .version(VERSION);
+program.addHelpText("beforeAll", banner());
 
 function fail(msg: string): never {
   console.error(`hivemux: ${msg}`);
@@ -483,4 +503,8 @@ function printTable(agents: AgentView[]): void {
   for (const a of agents) console.log(line(cols.map(([, f]) => f(a))));
 }
 
+if (process.argv.length <= 2) {
+  program.outputHelp();
+  process.exit(0);
+}
 program.parseAsync(process.argv);

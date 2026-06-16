@@ -10,6 +10,11 @@ export const PAGE = /* html */ `<!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>hivemux</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="alternate icon" href="/favicon.ico" sizes="any" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="#0d1117" />
 <style>
   :root{--bg:#0d1117;--card:#161b22;--bd:#30363d;--fg:#e6edf3;--mut:#8b949e;
         --grn:#3fb950;--ylw:#d29922;--cyn:#39c5cf;--red:#f85149;--gry:#6e7681;--sel:#1f2937}
@@ -21,12 +26,17 @@ export const PAGE = /* html */ `<!doctype html>
          padding:5px 10px;cursor:pointer;font:inherit;font-size:12px}
   button:hover:not(:disabled){border-color:var(--mut)}
   button:disabled{opacity:.5;cursor:default}
+  button svg.ic{width:13px;height:13px;vertical-align:-2px;margin-right:5px;
+       stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  button svg.ic .fill{fill:currentColor;stroke:none}
+  .top button{display:inline-flex;align-items:center}
   input,select{background:#010409;color:var(--fg);border:1px solid var(--bd);border-radius:6px;
        padding:7px 9px;font:inherit;font-size:13px;width:100%}
 
   .side{width:264px;min-width:264px;background:#0b0e13;border-right:1px solid var(--bd);display:flex;flex-direction:column}
   .brand{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--bd);font-weight:700;font-size:16px}
-  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--gry)}
+  .brand .dot{width:11px;height:11px;background:var(--gry);
+        clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
   .brand .dot.live{background:var(--grn);box-shadow:0 0 8px var(--grn)}
   .brand .sp{flex:1}
   .brand .snd{background:none;border:0;font-size:15px;padding:2px 4px}
@@ -35,13 +45,15 @@ export const PAGE = /* html */ `<!doctype html>
   .ws{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px}
   .ws:hover{background:#11161d}
   .ws.sel{background:var(--sel);outline:1px solid var(--bd)}
-  .ring{width:10px;height:10px;border-radius:50%;flex:none;background:var(--gry)}
+  /* honeycomb-cell status marks (flat-top hexagon) */
+  .ring{width:12px;height:12px;flex:none;background:var(--gry);
+        clip-path:polygon(25% 4%,75% 4%,100% 50%,75% 96%,25% 96%,0 50%)}
   .ring.running{background:var(--grn)}
   .ring.waiting{background:var(--ylw);animation:pulse 1.4s infinite}
   .ring.done{background:var(--cyn)}
   .ring.error{background:var(--red);animation:pulse 1.4s infinite}
   .ring.dead{background:var(--gry)}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(210,153,34,.6)}70%{box-shadow:0 0 0 7px rgba(210,153,34,0)}100%{box-shadow:0 0 0 0 rgba(210,153,34,0)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
   .ws .meta{min-width:0;flex:1}
   .ws .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ws .sub{color:var(--mut);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -201,6 +213,29 @@ function api(p,o){o=o||{};o.headers=Object.assign({},o.headers||{},AUTH);return 
 function postJSON(p,b){return api(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});}
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 const $=id=>document.getElementById(id);
+
+/* ---- brand icon set (hive-forward, inline SVG, currentColor) ---- */
+const SVG=p=>'<svg class="ic" viewBox="0 0 16 16" aria-hidden="true">'+p+'</svg>';
+const HEX='M8 1.4l5.7 3.3v6.6L8 14.6 2.3 11.3V4.7Z';
+const ICON={
+  send:SVG('<path d="M2 8h9"/><path d="M8 4l4 4-4 4"/>'),              // broadcast → arrow
+  loop:SVG('<path d="M13 8a5 5 0 1 1-1.6-3.7"/><path d="M13 2.6V5h-2.4"/>'), // refresh
+  fleet:SVG('<path d="M5 2.6l2.3 1.3v2.6L5 7.8 2.7 6.5V3.9Z" class="fill"/><path d="M11 2.6l2.3 1.3v2.6L11 7.8 8.7 6.5V3.9Z"/><path d="M8 8.2l2.3 1.3v2.6L8 13.4l-2.3-1.3V9.5Z"/>'),
+  mcp:SVG('<path d="'+HEX+'"/><circle cx="8" cy="8" r="1.5" class="fill"/>'),  // hive node
+  merge:SVG('<circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="6" r="1.5"/><path d="M4.5 5v6"/><path d="M4.5 8.5a4 4 0 0 0 4-2"/>'),
+  pr:SVG('<circle cx="4.5" cy="3.5" r="1.5"/><circle cx="4.5" cy="12.5" r="1.5"/><circle cx="11.5" cy="12.5" r="1.5"/><path d="M4.5 5v6"/><path d="M11.5 11V7a3 3 0 0 0-3-3H7"/>'),
+  kill:SVG('<path d="M4.5 4.5l7 7"/><path d="M11.5 4.5l-7 7"/>'),
+  prune:SVG('<circle cx="4" cy="11" r="1.6"/><circle cx="4" cy="5" r="1.6"/><path d="M5.4 9.9L12 4"/><path d="M5.4 6.1L12 12"/>'), // scissors
+  add:SVG('<path d="'+HEX+'"/><path d="M8 5.5v5M5.5 8h5"/>'),          // + in hex
+};
+
+// decorate the toolbar buttons with their brand glyphs
+[['bcastbtn','send','send'],['loopbtn','loop','loop'],['mergebtn','merge','merge'],
+ ['prbtn','pr','PR'],['killbtn','kill','kill'],['fleetbtn','fleet','fleet'],
+ ['mcpbtn','mcp','MCP'],['prunebtn','prune','prune']].forEach(([id,ic,lbl])=>{
+  const b=$(id);if(b)b.innerHTML=ICON[ic]+lbl;
+});
+$('newbtn').innerHTML=ICON.add+'new agent <span style="color:var(--mut)">(n)</span>';
 
 let agents=[],selected=null,conflicted=new Set(),prevStatus={},usage={};
 

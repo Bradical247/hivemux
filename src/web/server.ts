@@ -10,6 +10,7 @@ import { ensureTerminal, stopAllTerminals, stopTerminal } from "../core/terminal
 import type { NewAgentOpts, Status } from "../core/types";
 import { Watcher } from "../core/watcher";
 import { TOOLS as MCP_TOOLS, VERSION as MCP_VERSION } from "../ipc/mcp";
+import { FAVICON_SVG, ICONS, MANIFEST } from "./icons";
 import { PAGE } from "./page";
 
 function json(res: http.ServerResponse, body: unknown, code = 200): void {
@@ -84,6 +85,23 @@ export async function startWeb(
     const url = new URL(req.url ?? "/", "http://localhost");
     const path = url.pathname;
     try {
+      // Brand icons + manifest are public (no token) so the browser tab/PWA works
+      // before the page's auth header is in play.
+      if (req.method === "GET" && path === "/favicon.svg") {
+        res.writeHead(200, { "content-type": "image/svg+xml" });
+        return res.end(FAVICON_SVG);
+      }
+      if (req.method === "GET" && path === "/manifest.webmanifest") {
+        res.writeHead(200, { "content-type": "application/manifest+json" });
+        return res.end(MANIFEST);
+      }
+      if (req.method === "GET" && ICONS[path.slice(1)]) {
+        const ic = ICONS[path.slice(1)];
+        if (ic) {
+          res.writeHead(200, { "content-type": ic.type, "cache-control": "max-age=86400" });
+          return res.end(Buffer.from(ic.b64, "base64"));
+        }
+      }
       if (!authed(req, url, authToken)) {
         res.writeHead(401, { "content-type": "text/plain" });
         return res.end("unauthorized: append ?token=… or send an x-hivemux-token header");

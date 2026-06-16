@@ -21,6 +21,12 @@ All notable changes to hivemux are documented here. Format loosely follows
 
 ### Changed
 - Brand refreshed to a honeycomb mark; documentation de-emojified and tightened.
+- **Custom hivemux icon set** — app/favicon icons (`favicon.ico` + SVG, apple-touch,
+  PWA 192/512 + maskable, electron) generated from the honeycomb mark and embedded in
+  the web server (`/favicon.svg`, `/manifest.webmanifest`, `/icon-*.png`), so the
+  dashboard is installable as a PWA. The GUI toolbar now uses hive-forward glyph icons,
+  the sidebar status marks are honeycomb cells (not plain dots), and the CLI prints an
+  ASCII honeycomb banner.
 
 ## [1.3.0]
 
