@@ -1,26 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" fill="none" role="img" aria-label="hivemux">
   <rect width="1280" height="640" fill="#0d1117"/>
   <rect x="2" y="2" width="1276" height="636" rx="24" stroke="#21262d" stroke-width="2"/>
-
-  <!-- terminal mark, centered near top -->
-  <g transform="translate(560,120)">
-    <rect width="160" height="152" rx="16" fill="#161b22" stroke="#30363d" stroke-width="2"/>
-    <circle cx="24" cy="24" r="6" fill="#f85149"/>
-    <circle cx="46" cy="24" r="6" fill="#d29922"/>
-    <circle cx="68" cy="24" r="6" fill="#3fb950"/>
-    <line x1="80" y1="48" x2="80" y2="140" stroke="#30363d" stroke-width="2"/>
-    <line x1="14" y1="96" x2="146" y2="96" stroke="#30363d" stroke-width="2"/>
-    <rect x="14" y="48" width="66" height="48" fill="#3fb950" fill-opacity="0.15"/>
-    <rect x="14" y="48" width="66" height="48" stroke="#3fb950" stroke-opacity="0.65" stroke-width="2"/>
-    <path d="M24 64 l8 7 -8 7" stroke="#3fb950" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="40" y="76" width="20" height="4" rx="2" fill="#3fb950"/>
-    <path d="M92 64 l8 7 -8 7" stroke="#6e7681" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M24 112 l8 7 -8 7" stroke="#6e7681" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M92 112 l8 7 -8 7" stroke="#6e7681" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
-
-  <text x="640" y="400" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="128" font-weight="700" fill="#e6edf3">hivemux</text>
-  <rect x="540" y="426" width="200" height="5" rx="2.5" fill="#3fb950"/>
-  <text x="640" y="478" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="30" fill="#8b949e">tmux-backed orchestrator for parallel AI coding agents</text>
-  <text x="640" y="528" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="22" fill="#6e7681">parallel agents · git worktrees · TUI · web · conflict detection · headless</text>
+  <path d="M594.0,196.0L617.0,156.2L663.0,156.2L686.0,196.0L663.0,235.8L617.0,235.8Z" fill="#3fb950" fill-opacity="0.9" stroke="#3fb950" stroke-width="2"/>
+  <path d="M667.1,238.2L690.1,198.4L736.1,198.4L759.1,238.2L736.1,278.1L690.1,278.1Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <path d="M667.1,153.8L690.1,113.9L736.1,113.9L759.1,153.8L736.1,193.6L690.1,193.6Z" fill="#3fb950" fill-opacity="0.9" stroke="#3fb950" stroke-width="2"/>
+  <path d="M520.9,238.2L543.9,198.4L589.9,198.4L612.9,238.2L589.9,278.1L543.9,278.1Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <path d="M520.9,153.8L543.9,113.9L589.9,113.9L612.9,153.8L589.9,193.6L543.9,193.6Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <path d="M594.0,280.5L617.0,240.6L663.0,240.6L686.0,280.5L663.0,320.3L617.0,320.3Z" fill="#3fb950" fill-opacity="0.9" stroke="#3fb950" stroke-width="2"/>
+  <path d="M594.0,111.5L617.0,71.7L663.0,71.7L686.0,111.5L663.0,151.4L617.0,151.4Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <text x="640" y="410" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="110" font-weight="700" fill="#e6edf3">hivemux</text>
+  <text x="640" y="470" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="28" fill="#8b949e">tmux-backed orchestrator for parallel AI coding agents</text>
+  <text x="640" y="520" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="22" fill="#6e7681">loops · fleets · MCP · cost control · CLI · TUI · web · desktop</text>
 </svg>

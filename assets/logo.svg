@@ -1,30 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-label="hivemux logo">
-  <!-- app-icon background -->
   <rect width="256" height="256" rx="56" fill="#0d1117"/>
   <rect x="1" y="1" width="254" height="254" rx="55" stroke="#30363d" stroke-width="2"/>
-
-  <!-- terminal window with tiled panes = a multiplexer of agents -->
-  <g transform="translate(48,52)">
-    <rect width="160" height="152" rx="16" fill="#161b22" stroke="#30363d" stroke-width="2"/>
-
-    <!-- title bar traffic lights -->
-    <circle cx="24" cy="24" r="6" fill="#f85149"/>
-    <circle cx="46" cy="24" r="6" fill="#d29922"/>
-    <circle cx="68" cy="24" r="6" fill="#3fb950"/>
-
-    <!-- pane dividers (2x2 tile) -->
-    <line x1="80" y1="48" x2="80" y2="140" stroke="#30363d" stroke-width="2"/>
-    <line x1="14" y1="96" x2="146" y2="96" stroke="#30363d" stroke-width="2"/>
-
-    <!-- active agent pane (top-left) glows green -->
-    <rect x="14" y="48" width="66" height="48" fill="#3fb950" fill-opacity="0.15"/>
-    <rect x="14" y="48" width="66" height="48" stroke="#3fb950" stroke-opacity="0.65" stroke-width="2"/>
-
-    <!-- prompts: active pane bright, others muted -->
-    <path d="M24 64 l8 7 -8 7" stroke="#3fb950" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <rect x="40" y="76" width="20" height="4" rx="2" fill="#3fb950"/>
-    <path d="M92 64 l8 7 -8 7" stroke="#6e7681" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M24 112 l8 7 -8 7" stroke="#6e7681" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M92 112 l8 7 -8 7" stroke="#6e7681" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
+  <path d="M94.0,128.0L111.0,98.6L145.0,98.6L162.0,128.0L145.0,157.4L111.0,157.4Z" fill="#3fb950" fill-opacity="0.9" stroke="#3fb950" stroke-width="2"/>
+  <path d="M148.1,159.2L165.1,129.8L199.1,129.8L216.1,159.2L199.1,188.7L165.1,188.7Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <path d="M148.1,96.8L165.1,67.3L199.1,67.3L216.1,96.8L199.1,126.2L165.1,126.2Z" fill="#3fb950" fill-opacity="0.9" stroke="#3fb950" stroke-width="2"/>
+  <path d="M39.9,159.2L56.9,129.8L90.9,129.8L107.9,159.2L90.9,188.7L56.9,188.7Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <path d="M39.9,96.8L56.9,67.3L90.9,67.3L107.9,96.8L90.9,126.2L56.9,126.2Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
+  <path d="M94.0,190.4L111.0,161.0L145.0,161.0L162.0,190.4L145.0,219.9L111.0,219.9Z" fill="#3fb950" fill-opacity="0.9" stroke="#3fb950" stroke-width="2"/>
+  <path d="M94.0,65.6L111.0,36.1L145.0,36.1L162.0,65.6L145.0,95.0L111.0,95.0Z" fill="#161b22" fill-opacity="1" stroke="#30363d" stroke-width="2"/>
 </svg>
