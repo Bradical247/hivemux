@@ -27,10 +27,15 @@ attach to from anywhere**.
 
 ## Features
 
+- 🧠 **MCP server** — `hivemux mcp` exposes the orchestration as MCP tools, so a
+  **conductor agent** (Claude Code/Desktop, Cursor) drives a hivemux fleet by talking:
+  *"fan out 3 agents on these bugs, loop each until tests pass, $3 cap, merge the greens."*
+  spawn / loop / status / merge / kill over MCP, with cost caps + a concurrency limit.
 - 🔁 **Loop engineering** — `hivemux loop <name> --goal … --check "bun test"` drives an
-  agent **headless** (`claude -p`, one-shot per iteration) through **iterate → verify → fix**
-  cycles until the check passes (or it hits a max-iter / cost cap), with exact per-iteration
-  cost. Verifier = a shell check *or* an LLM judge (`--rubric`).
+  agent **headless** (one-shot per iteration) through **iterate → verify → fix** cycles
+  until the check passes (or it hits a max-iter / cost cap), with exact per-iteration cost.
+  Verifier = a shell check *or* an LLM judge (`--rubric`). Pluggable runner (`--runner`):
+  `claude` built in, codex / gemini / OpenRouter-backed CLIs via config.
   `--fleet N` runs the same goal on N agents at once; `--commit`/`--pr` land it on pass.
   This is the bit the other tmux runners don't have: agents that **finish the job
   unattended, gated by a real check**.
@@ -101,8 +106,22 @@ hivemux web [--port 7878] [--host 0.0.0.0] [--token t]   # web dashboard, SSE li
 hivemux gui [--port 7878]               # cmux-style desktop app window (needs ttyd + a browser)
 hivemux daemon                          # control-plane daemon (event push, remote API)
 hivemux watch                           # stream live status from the daemon
+hivemux mcp                             # run as an MCP server (stdio) — a conductor agent drives the fleet
 hivemux agents
 ```
+
+### Drive hivemux from a conductor agent (MCP)
+
+Add it to your MCP client once:
+
+```bash
+claude mcp add hivemux -- hivemux mcp     # or a .mcp.json entry
+```
+
+Then the top-level agent orchestrates a fleet conversationally — *"spin up agents
+for the 3 TODOs, loop each until `bun test` passes, $3 cap each, merge the passes."*
+Tools: `spawn_agent`, `start_loop` (non-blocking — poll `get_status`), `usage`,
+`conflicts`, `merge`, `kill`, `broadcast`. Cost-capped and concurrency-limited by default.
 
 Exposing the web dashboard beyond loopback (`--host 0.0.0.0`) auto-generates an auth
 token if you don't pass `--token`; the printed URL includes it (`?token=…`), and the
@@ -110,12 +129,14 @@ API also accepts an `x-hivemux-token` header.
 
 ## Install
 
-### Desktop app (Linux)
+### Desktop app (Linux + macOS)
 
-Grab the **AppImage** or **`.deb`** from
-[Releases](https://github.com/Bradical247/hivemux/releases/latest) — a real desktop
-app (cmux-style window) that bundles `hivemux` + `ttyd`, nothing else to install.
-Built by CI on each tagged release (`electron/`).
+Grab from [Releases](https://github.com/Bradical247/hivemux/releases/latest):
+- **Linux**: `*.AppImage` or `*.deb`
+- **macOS**: `*.dmg` (Apple Silicon; unsigned — right-click → Open the first time)
+- **CLI-only**: the raw `hivemux-linux-x64` / `hivemux-macos-arm64` binaries
+
+Desktop installers bundle `hivemux` + `ttyd`. Built by CI on each tagged release.
 
 ### CLI / from source
 
@@ -164,6 +185,10 @@ hivemux notify --status waiting --note "needs review"
 {
   "agents": {
     "claude-yolo": { "cmd": "claude --dangerously-skip-permissions" }
+  },
+  "runners": {
+    "gemini": { "bin": "gemini", "args": ["-p", "{prompt}"], "parse": "text" },
+    "codex":  { "bin": "codex", "args": ["exec", "{prompt}"], "parse": "text" }
   },
   "pricing": {
     "gpt-5": { "in": 1.25, "out": 10, "context": 400000 }

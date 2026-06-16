@@ -1,7 +1,7 @@
 {
   "name": "hivemux-desktop",
-  "version": "1.1.1",
-  "description": "hivemux — desktop app (Linux): parallel AI coding agents in a native window.",
+  "version": "1.2.0",
+  "description": "hivemux — desktop app: parallel AI coding agents in a native window.",
   "main": "main.js",
   "license": "MIT",
   "author": "Conrad Bachman",
@@ -27,7 +27,12 @@
       "category": "Development",
       "icon": "icon.png",
       "maintainer": "Conrad Bachman <108717148+Bradical247@users.noreply.github.com>",
-      "description": "Linux-native, tmux-backed orchestrator for parallel AI coding agents."
+      "description": "tmux-backed orchestrator for parallel AI coding agents."
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.developer-tools",
+      "icon": "icon.png"
     }
   }
 }

@@ -3,6 +3,22 @@
 All notable changes to hivemux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
+## [1.2.0]
+
+### Added
+- **MCP server** (`hivemux mcp`, stdio JSON-RPC) — drive a hivemux fleet from any
+  MCP client (Claude Code/Desktop, Cursor, …). A conductor agent spawns workers,
+  starts verify→fix loops, watches status, merges the passes. 9 tools: `spawn_agent`,
+  `start_loop` (fire-and-poll), `get_status`, `list_agents`, `usage`, `conflicts`,
+  `merge`, `kill`, `broadcast`. Safety: mandatory per-agent cost cap, max-concurrent
+  limit, `acceptEdits` (never skip-permissions).
+- **Pluggable runners** — loops are no longer claude-only. `--runner <name>`;
+  `claude` is built in (verified), others (codex, gemini, OpenRouter-backed CLIs)
+  drop into `~/.hivemux/config.json` → `runners` (bin / args / parse).
+- **macOS builds** — releases now also ship a `.dmg` and a `hivemux-macos-arm64`
+  binary (alongside Linux AppImage/`.deb` and `hivemux-linux-x64`). The code was
+  already portable (Bun + tmux + node: APIs).
+
 ## [1.1.1]
 
 ### Changed

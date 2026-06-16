@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name("hivemux")
   .description("tmux-backed orchestrator for parallel AI coding agents")
-  .version("1.1.1");
+  .version("1.2.0");
 
 function fail(msg: string): never {
   console.error(`hivemux: ${msg}`);
@@ -205,6 +205,7 @@ program
   .option("--check <cmd>", "shell verifier — exit 0 = pass")
   .option("--rubric <text>", "LLM-judge criteria (used when no --check)")
   .option("--max <n>", "max iterations", "10")
+  .option("--runner <name>", "agent runner: claude (default) or a configured one", "claude")
   .option("--commit", "git commit on pass")
   .option("--pr", "open a GitHub PR on pass (needs gh)")
   .option("--fleet <n>", "run the same goal on N agents (name = base)")
@@ -217,6 +218,7 @@ program
         check: opts.check,
         rubric: opts.rubric,
         maxIters: Number(opts.max),
+        runner: opts.runner,
       };
       if (!spec.check && !spec.rubric) fail("need --check <cmd> or --rubric <text>");
       const lopts = {
@@ -313,6 +315,16 @@ program
         console.log(`hivemux gui → open ${url}  (no Chromium/Chrome found for app mode)`);
       }
       console.log("  embedded terminals require ttyd on PATH");
+    }),
+  );
+
+program
+  .command("mcp")
+  .description("run hivemux as an MCP server (stdio) so a conductor agent can drive a fleet")
+  .action(() =>
+    guard(async () => {
+      const { runMcp } = await import("./ipc/mcp");
+      await runMcp();
     }),
   );
 

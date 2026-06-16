@@ -7,6 +7,7 @@
 // a shell check (exit 0 = pass) or an LLM judge against a rubric.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { parseTurn, resolveRunner, type TurnOut, turnArgs } from "./runners";
 import * as store from "./store";
 
 const pexec = promisify(execFile);
@@ -46,51 +47,25 @@ export function decide(
   };
 }
 
-interface Turn {
-  result: string;
-  costUSD: number;
-  sessionId?: string;
-  model: string;
-  inTok: number;
-  outTok: number;
-}
-
-/** One headless agent turn via `claude -p --output-format json`. */
+/** One headless agent turn via the configured runner (claude / codex / gemini / …). */
 async function agentTurn(
   runner: string,
   worktree: string,
   prompt: string,
   resumeId?: string,
-): Promise<Turn> {
-  const args = ["-p", prompt, "--output-format", "json", "--permission-mode", "acceptEdits"];
-  if (resumeId) args.push("--resume", resumeId);
-  // The depleted ANTHROPIC_API_KEY on this box shadows the working login — drop it.
+): Promise<TurnOut> {
+  const adapter = resolveRunner(runner);
+  const args = turnArgs(adapter, prompt, resumeId);
+  // A depleted ANTHROPIC_API_KEY can shadow a working login — drop it for the turn.
   const env = { ...process.env };
   delete env.ANTHROPIC_API_KEY;
-  const { stdout } = await pexec(runner, args, {
+  const { stdout } = await pexec(adapter.bin, args, {
     cwd: worktree,
     env,
     timeout: 300_000,
     maxBuffer: 16 * 1024 * 1024,
   });
-  const j = JSON.parse(stdout) as {
-    result?: string;
-    total_cost_usd?: number;
-    session_id?: string;
-    model?: string;
-    modelUsage?: Record<string, unknown>;
-    usage?: { input_tokens?: number; output_tokens?: number };
-  };
-  // model id may be top-level `model` or the key of `modelUsage`
-  const model = j.model ?? (j.modelUsage ? Object.keys(j.modelUsage)[0] : undefined) ?? "";
-  return {
-    result: j.result ?? "",
-    costUSD: j.total_cost_usd ?? 0,
-    sessionId: j.session_id,
-    model,
-    inTok: j.usage?.input_tokens ?? 0,
-    outTok: j.usage?.output_tokens ?? 0,
-  };
+  return parseTurn(adapter, stdout);
 }
 
 /** Shell verifier: run `cmd` in the worktree; exit 0 = pass. */
@@ -122,7 +97,7 @@ export async function verifyRubric(
   try {
     const env = { ...process.env };
     delete env.ANTHROPIC_API_KEY;
-    const { stdout } = await pexec(runner, ["-p", prompt], {
+    const { stdout } = await pexec(resolveRunner(runner).bin, ["-p", prompt], {
       cwd: worktree,
       env,
       timeout: 120_000,
@@ -174,7 +149,7 @@ export async function runLoop(
     await persist(iter, "running");
     onLog(`iter ${iter}/${spec.maxIters}: running agent…`);
 
-    let turn: Turn;
+    let turn: TurnOut;
     try {
       turn = await agentTurn(runner, a0.worktree, prompt, resumeId);
     } catch (e) {

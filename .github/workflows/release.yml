@@ -8,40 +8,72 @@ permissions:
   contents: write
 
 jobs:
-  desktop:
+  linux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-
       - name: Build hivemux binary
         run: |
           bun install --frozen-lockfile
           bun run build
-
+          cp dist/hivemux hivemux-linux-x64
       - name: Stage native resources (hivemux + ttyd)
         run: |
           mkdir -p electron/resources
           cp dist/hivemux electron/resources/hivemux
           curl -fsSL https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64 -o electron/resources/ttyd
           chmod +x electron/resources/hivemux electron/resources/ttyd
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Package desktop installers (AppImage + deb)
+      - name: Package installers (AppImage + deb)
         working-directory: electron
         run: |
           npm install
           npx electron-builder --linux AppImage deb --publish never
-
-      - name: Publish installers to the GitHub Release
+      - name: Publish
         uses: softprops/action-gh-release@v2
         with:
           files: |
             electron/dist/*.AppImage
             electron/dist/*.deb
+            hivemux-linux-x64
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Build hivemux binary
+        run: |
+          bun install --frozen-lockfile
+          bun run build
+          cp dist/hivemux hivemux-macos-arm64
+      - name: Stage native resources (hivemux + ttyd)
+        run: |
+          mkdir -p electron/resources
+          cp dist/hivemux electron/resources/hivemux
+          brew install ttyd
+          cp "$(brew --prefix)/bin/ttyd" electron/resources/ttyd
+          chmod +x electron/resources/hivemux electron/resources/ttyd
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Package installer (dmg, unsigned)
+        working-directory: electron
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: |
+          npm install
+          npx electron-builder --mac dmg --publish never
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            electron/dist/*.dmg
+            hivemux-macos-arm64
