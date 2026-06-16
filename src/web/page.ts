@@ -58,6 +58,9 @@ export const PAGE = /* html */ `<!doctype html>
   .ws .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ws .sub{color:var(--mut);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ws .warn{color:var(--red)}
+  .pend{font-size:11px;color:var(--ylw);margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .mini{padding:1px 7px;font-size:11px;border-radius:5px}
+  .mini.ok{border-color:var(--grn);color:var(--grn)}
   .conf{border-top:1px solid var(--bd);padding:10px 14px;font-size:12px;color:var(--red);max-height:30%;overflow:auto}
   .conf .f{color:var(--mut);font-size:11px}
 
@@ -238,7 +241,7 @@ const ICON={
 });
 $('newbtn').innerHTML=ICON.add+'new agent <span style="color:var(--mut)">(n)</span>';
 
-let agents=[],selected=null,conflicted=new Set(),prevStatus={},usage={};
+let agents=[],selected=null,conflicted=new Set(),prevStatus={},usage={},pending=new Set();
 
 /* ---- sound + notifications ---- */
 let SOUND=localStorage.getItem('hivemux_sound')!=='off';
@@ -275,6 +278,7 @@ function renderList(){
         <div class="nm">\${esc(a.name)} \${conflicted.has(a.name)?'<span class="warn">⚠</span>':''}</div>
         <div class="sub">\${esc(a.status)} · \${esc(a.branch)}\${a.note?' · '+esc(a.note):''}</div>
         \${a.loop?\`<div class="sub" style="color:var(--ylw);cursor:pointer" onclick="event.stopPropagation();openLog('\${esc(a.name)}')" title="loop history">loop \${a.loop.iter}/\${a.loop.maxIters} [\${esc(a.loop.state)}] · log</div>\`:''}
+        \${pending.has(a.name)?\`<div class="pend" onclick="event.stopPropagation()">commit/PR held <button class="mini ok" onclick="approveAgent('\${esc(a.name)}')">approve</button><button class="mini" onclick="denyAgent('\${esc(a.name)}')">deny</button></div>\`:''}
         \${usageLine(a.name)}
       </span>
     </div>\`).join('')||'<div style="color:var(--mut);padding:14px">no agents yet — press <b>n</b></div>';
@@ -452,15 +456,29 @@ async function loadUsage(){
     renderList();
   }catch(e){}
 }
+async function loadPending(){
+  try{ pending=new Set(await (await api('/api/pending')).json()); renderList(); }catch(e){}
+}
+async function approveAgent(name){
+  const r=await postJSON('/api/approve',{name});const j=await r.json();
+  toast(j&&j.pr?('approved '+name+' · PR '+j.pr):('approved '+name),'ok');
+  await loadPending();
+}
+async function denyAgent(name){
+  await postJSON('/api/deny',{name});
+  toast('denied '+name,'warn');
+  await loadPending();
+}
 async function boot(){
   const keys=await (await api('/api/agent-keys')).json();
   $('f_agent').innerHTML=keys.map(k=>\`<option>\${esc(k)}</option>\`).join('');
   $('l_runner').innerHTML=['claude',...keys.filter(k=>k!=='claude')].map(k=>\`<option>\${esc(k)}</option>\`).join('');
   agents=await (await api('/api/agents')).json();
   agents.forEach(a=>prevStatus[a.name]=a.status); // seed, don't chime existing
-  renderList();await loadConflicts();onSnapshot(agents);await loadUsage();
+  renderList();await loadConflicts();onSnapshot(agents);await loadUsage();await loadPending();
   if(agents.length&&!selected)select(agents[0].name); // open the first workspace by default
   setInterval(loadUsage,6000);
+  setInterval(loadPending,6000);
   const ev=new EventSource('/api/events'+Q);
   ev.onopen=()=>$('live').classList.add('live');
   ev.onerror=()=>$('live').classList.remove('live');

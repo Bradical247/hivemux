@@ -29,7 +29,8 @@ All notable changes to hivemux are documented here. Format loosely follows
   `policy.network`.
 - **Governance policy** (`~/.hivemux/config.json` → `policy`): `maxCostUSD` hard cost
   ceiling per loop, and `requireApproval` holds a passing loop's commit/PR for
-  `hivemux approve <name>` / `hivemux deny <name>`.
+  `hivemux approve <name>` / `hivemux deny <name>`, or the approve/deny buttons that
+  appear inline on a held agent in the web GUI (`/api/pending`, `/api/approve`, `/api/deny`).
 - **`hivemux doctor`**: checks runtime deps (tmux, ttyd, browser, gh, node), sandbox
   availability, the active policy, and configured runners.
 

@@ -206,6 +206,19 @@ export async function startWeb(
       }
       if (req.method === "GET" && path === "/api/mcp")
         return json(res, { version: MCP_VERSION, tools: MCP_TOOLS });
+      if (req.method === "GET" && path === "/api/pending")
+        return json(res, await mgr.listPending());
+      if (req.method === "POST" && path === "/api/approve") {
+        const b = await readBody(req);
+        const r = await mgr.approve(b.name as string);
+        await pushSnapshot();
+        return json(res, r);
+      }
+      if (req.method === "POST" && path === "/api/deny") {
+        const b = await readBody(req);
+        await mgr.denyApproval(b.name as string);
+        return json(res, { ok: true });
+      }
       if (req.method === "POST" && path === "/api/broadcast") {
         const b = await readBody(req);
         const names = Array.isArray(b.names) ? (b.names as string[]) : [];
