@@ -3,7 +3,7 @@
 All notable changes to hivemux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
-## [Unreleased]
+## [1.5.0] — 2026-06-16
 
 ### Added
 - **GUI runbook is now a visual manual** (`docs/GUI.md`): two annotated screenshots

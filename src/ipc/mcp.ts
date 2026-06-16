@@ -10,7 +10,7 @@
 import * as readline from "node:readline";
 import * as mgr from "../core/manager";
 
-export const VERSION = "1.4.1";
+export const VERSION = "1.5.0";
 const MAX_AGENTS = 12;
 const DEFAULT_COST_CAP = 5;
 

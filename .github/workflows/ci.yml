@@ -26,3 +26,40 @@ jobs:
 
       - name: Smoke-test the binary
         run: ./dist/hivemux --version
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: System deps (tmux + ttyd)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tmux
+          sudo curl -fsSL https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64 -o /usr/local/bin/ttyd
+          sudo chmod +x /usr/local/bin/ttyd
+          tmux -V && ttyd --version
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Install Chrome for Playwright
+        run: bunx playwright install --with-deps chrome
+
+      - name: Build binary (the GUI server under test)
+        run: bun run build
+
+      - name: Playwright E2E
+        run: bun run test:e2e
+
+      - name: Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

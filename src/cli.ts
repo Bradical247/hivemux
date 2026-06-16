@@ -16,7 +16,7 @@ import type { AgentView, Status } from "./core/types";
 import { DaemonClient } from "./ipc/client";
 import { startDaemon } from "./ipc/server";
 
-const VERSION = "1.4.1";
+const VERSION = "1.5.0";
 
 /** ASCII honeycomb mark. Green only when stdout is a TTY (keeps pipes clean). */
 function banner(): string {

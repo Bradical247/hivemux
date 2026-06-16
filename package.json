@@ -1,6 +1,6 @@
 {
   "name": "hivemux",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Linux-native, tmux-backed orchestrator for parallel AI coding agents in isolated git worktrees.",
   "type": "module",
   "bin": {
