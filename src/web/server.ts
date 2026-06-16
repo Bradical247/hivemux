@@ -231,6 +231,19 @@ export async function startWeb(
     clearInterval(capPoll);
     stopAllTerminals();
   });
-  await new Promise<void>((resolve) => server.listen(port, host, resolve));
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE") {
+        reject(
+          new Error(
+            `port ${port} is already in use — pick another with --port, or free it (e.g. fuser -k ${port}/tcp)`,
+          ),
+        );
+      } else {
+        reject(err);
+      }
+    });
+    server.listen(port, host, resolve);
+  });
   return { server, token: authToken };
 }
