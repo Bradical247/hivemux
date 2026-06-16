@@ -95,10 +95,3 @@ export function wrap(bin: string, args: string[], opts: WrapOpts): { bin: string
   ].join(" ");
   return { bin: "sandbox-exec", args: ["-p", profile, bin, ...args] };
 }
-
-/** Shell-quote a wrapped command for use inside a tmux send-keys line. */
-export function wrapShell(bin: string, args: string[], opts: WrapOpts): string {
-  const w = wrap(bin, args, opts);
-  const q = (s: string) => (/^[\w./:=-]+$/.test(s) ? s : `'${s.replace(/'/g, "'\\''")}'`);
-  return [w.bin, ...w.args].map(q).join(" ");
-}

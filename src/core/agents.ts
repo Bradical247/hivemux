@@ -8,7 +8,7 @@ export interface AgentDef {
   cmd: string; // command run inside the worktree's tmux session
 }
 
-const DEFAULTS: Record<string, AgentDef> = {
+export const DEFAULTS: Record<string, AgentDef> = {
   claude: { cmd: "claude" },
   codex: { cmd: "codex" },
   gemini: { cmd: "gemini" },

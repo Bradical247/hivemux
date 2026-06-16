@@ -176,6 +176,20 @@ server and go.
 Requires (build/dev): [Bun](https://bun.sh) `>= 1.1`, `tmux >= 3.2`, `git`, plus
 whatever agent CLIs you drive. Dev without building: `bun src/cli.ts <args>`.
 
+### Tests
+
+```bash
+bun run check      # typecheck + lint + unit tests (bun test src)
+bun run build && bun run test:e2e   # Playwright E2E of the web GUI (uses system Chrome)
+bun run pack       # bundle the repo to one file for sharing with an LLM (repomix)
+```
+
+The E2E suite boots a real `hivemux gui` against a temp `$HOME` with throwaway
+`shell` agents and drives it headlessly (load, tile grid, loop/MCP modals, approve
+flow). See [docs/DESIGN-12factor.md](docs/DESIGN-12factor.md) for how the loop
+engine maps onto the [12-Factor Agents](https://github.com/humanlayer/12-factor-agents)
+principles.
+
 ## Quickstart
 
 ```bash

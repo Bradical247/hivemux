@@ -58,15 +58,6 @@ export async function buildGrid(grid: string, sessions: string[]): Promise<void>
   await pexec("tmux", ["select-layout", "-t", grid, "tiled"]);
 }
 
-export async function listSessionNames(): Promise<string[]> {
-  try {
-    const { stdout } = await pexec("tmux", ["list-sessions", "-F", "#{session_name}"]);
-    return stdout.split("\n").filter(Boolean);
-  } catch {
-    return []; // no server running == no sessions
-  }
-}
-
 /** Attach (or switch, if already inside tmux). Synchronous: it takes over the TTY. */
 export function attach(name: string): void {
   const verb = process.env.TMUX ? "switch-client" : "attach";

@@ -1,6 +1,10 @@
 // Token pricing, provider-agnostic. All rates are USD per 1,000,000 tokens.
 // Built-in Anthropic rates are grounded against the Anthropic pricing reference
-// (cached 2026-06-04). Rates for ANY other model/provider (OpenAI, Gemini, …)
+// (cached 2026-06-04) and cross-checked against the ccusage / LiteLLM model-prices
+// data (github.com/ryoppippi/ccusage). The cache convention matches theirs:
+// 5-min cache write = 1.25x input, cache read = 0.1x input. pricing.test.ts locks
+// the full table so a silent drift fails CI. Rates for ANY other model/provider
+// (OpenAI, Gemini, …)
 // are supplied or overridden via ~/.hivemux/config.json:
 //   { "pricing": { "gpt-5": { "in": 1.25, "out": 10, "context": 400000 } } }
 // hivemux ships no prices it can't cite; unknown models show cost as "—".

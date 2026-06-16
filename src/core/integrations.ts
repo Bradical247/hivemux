@@ -36,8 +36,3 @@ export async function emit(text: string, data: unknown): Promise<void> {
   if (c.webhook) posts.push(post(c.webhook, { text, data }));
   await Promise.all(posts);
 }
-
-export async function configured(): Promise<boolean> {
-  const c = await config();
-  return Boolean(c.slackWebhook || c.webhook);
-}

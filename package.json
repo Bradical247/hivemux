@@ -14,8 +14,10 @@
     "lint": "biome check src package.json biome.json",
     "lint:fix": "biome check --write src package.json biome.json",
     "format": "biome format --write src",
-    "test": "bun test",
-    "check": "bun run typecheck && bun run lint && bun test"
+    "test": "bun test src",
+    "test:e2e": "playwright test",
+    "pack": "bunx repomix --output hivemux.repomix.txt",
+    "check": "bun run typecheck && bun run lint && bun test src"
   },
   "engines": {
     "bun": ">=1.1"
@@ -26,6 +28,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.0",
+    "@faker-js/faker": "^10.4.0",
+    "@playwright/test": "^1.61.0",
     "@types/bun": "^1.1.0",
     "typescript": "^5.5.4"
   }

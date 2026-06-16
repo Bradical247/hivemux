@@ -80,6 +80,9 @@ export const PAGE = /* html */ `<!doctype html>
         border-bottom:1px solid var(--bd);cursor:pointer;background:#0b0e13}
   .grid .hd:hover{background:#11161d}
   .grid .hd .mut{color:var(--mut)}
+  .grid .hd .sp{flex:1}
+  .grid .hd .stat{color:var(--cyn);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .grid .hd .stat .warn{color:var(--ylw)}
   .grid .cell iframe{flex:1;border:0;width:100%;background:#010409}
   .grid .cell.attn{--gc:var(--cyn);animation:tileattn .9s ease-in-out infinite;z-index:1}
   .grid .cell.attn.done{--gc:var(--cyn)} .grid .cell.attn.waiting{--gc:var(--ylw)} .grid .cell.attn.error{--gc:var(--red)}
@@ -469,7 +472,7 @@ function renderGrid(){
   for(const a of live){
     const cell=document.createElement('div');cell.className='cell';cell.dataset.agent=a.name;
     const hd=document.createElement('div');hd.className='hd';
-    hd.innerHTML='<span class="ring '+esc(a.status)+'"></span><b>'+esc(a.name)+'</b> <span class="mut">'+esc(a.status)+'</span>';
+    hd.innerHTML='<span class="ring '+esc(a.status)+'"></span><b>'+esc(a.name)+'</b> <span class="mut">'+esc(a.status)+'</span><span class="sp"></span><span class="stat">'+tileStat(a.name)+'</span>';
     hd.onclick=()=>{clearAttn(a.name);select(a.name);setTiled(false);};
     const fr=document.createElement('iframe');fr.setAttribute('sandbox','allow-scripts allow-same-origin');
     cell.appendChild(hd);cell.appendChild(fr);
@@ -488,6 +491,16 @@ function loadTerm(fr,name){
     setTimeout(()=>{fr.src='about:blank';setTimeout(()=>{fr.src=url;},60);},1700);
   }).catch(()=>{});
 }
+// Compact per-tile status strip (ccstatusline-style): model · ctx% · $cost.
+function tileStat(name){
+  const r=usage[name]; if(!r)return '';
+  const u=r.usageView; if(!u||u.source==='none')return '';
+  const model=u.model?esc(u.model.replace(/^claude-/,'').replace(/-d{8}$/,'')):'';
+  const ctx=u.ctxPct!=null?(u.ctxPct+'% ctx'):'';
+  const cost=u.costUSD!=null?('$'+u.costUSD.toFixed(3)):'';
+  const warn=(r.overCost||r.overCtx)?' <span class="warn">⚠</span>':'';
+  return [model,ctx,cost].filter(Boolean).join(' · ')+warn;
+}
 function clearAttn(name){const c=cells.get(name);if(c)c.cell.classList.remove('attn','done','waiting','error');}
 function flashCell(name,status){const c=cells.get(name);if(!c)return;c.cell.classList.remove('done','waiting','error');c.cell.classList.add('attn',status);}
 function syncCells(list){
@@ -495,7 +508,8 @@ function syncCells(list){
   if(gridSig()!==gridSigCur){renderGrid();return;} // agent added or removed → rebuild
   list.forEach(a=>{const c=cells.get(a.name);if(!c)return;
     const ring=c.hd.querySelector('.ring');if(ring)ring.className='ring '+a.status;
-    const mut=c.hd.querySelector('.mut');if(mut)mut.textContent=a.status;});
+    const mut=c.hd.querySelector('.mut');if(mut)mut.textContent=a.status;
+    const st=c.hd.querySelector('.stat');if(st)st.innerHTML=tileStat(a.name);});
 }
 
 function onSnapshot(list){

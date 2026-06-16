@@ -3,6 +3,31 @@
 All notable changes to hivemux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
+## [Unreleased]
+
+### Added
+- **Playwright E2E** for the web GUI (`e2e/`, `bun run test:e2e`): boots a real
+  `hivemux gui` against a temp `$HOME` with throwaway `shell` agents and drives it
+  headlessly via system Chrome — load, sidebar, toolbar, tile grid, loop + MCP
+  modals, and the approve/deny hold. Closes the gap where the GUI had no tests.
+- **Pricing regression lock + fuzz tests** (`pricing.test.ts`, `pricing.fuzz.test.ts`):
+  the full Anthropic rate table and the cache multipliers (write 1.25x, read 0.1x)
+  are pinned and cross-checked against ccusage/LiteLLM; faker-driven property tests
+  verify the cost math and its monotonicity over random usage.
+- **Richer tile header**: each tile now shows a compact `model · ctx% · $cost`
+  strip (ccstatusline-style), updated live.
+- **docs/DESIGN-12factor.md**: honest audit of the loop engine against the
+  12-Factor Agents principles.
+- `bun run pack` (repomix) to bundle the repo into one LLM-friendly file.
+
+### Removed
+- Dead code surfaced by a knip sweep: `wrapShell` (sandbox), `listSessionNames`
+  (tmux), `configured` (integrations) — exported but never called.
+
+### Fixed
+- `agents.test.ts` is now hermetic (asserts the exported `DEFAULTS` map) instead of
+  reading the developer's real `~/.hivemux/config.json`.
+
 ## [1.4.1]
 
 ### Added
