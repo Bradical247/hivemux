@@ -129,7 +129,7 @@ export const PAGE = /* html */ `<!doctype html>
     <button id="prunebtn" title="remove agents whose tmux session is gone">prune</button>
   </div>
   <div class="stage">
-    <iframe id="term" title="terminal"></iframe>
+    <iframe id="term" title="terminal" sandbox="allow-scripts allow-same-origin"></iframe>
     <div class="empty" id="empty">▦<br/>select an agent, or press <kbd>n</kbd> for a new one</div>
   </div>
 </section>
