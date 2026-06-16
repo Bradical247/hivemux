@@ -32,6 +32,16 @@ export interface Agent {
   usageCtx?: number; // context tokens reported alongside pushed usage
   costCap?: number; // alert when estimated cost (USD) crosses this
   ctxCap?: number; // alert when context fill (%) crosses this
+  loop?: LoopInfo; // active/last loop-engineering run
+}
+
+export interface LoopInfo {
+  goal: string;
+  check?: string;
+  rubric?: string;
+  maxIters: number;
+  iter: number;
+  state: "running" | "passed" | "stopped";
 }
 
 /** Agent enriched with live tmux liveness. */

@@ -3,6 +3,23 @@
 All notable changes to hivemux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
+## [1.1.0]
+
+### Added
+- **Loop engineering** — `hivemux loop <name> --goal … --check "<cmd>" --max N`
+  drives an agent through iterate → verify → fix cycles until the verifier passes
+  or a stop condition hits (max iters / cost cap / context cap). On pass: optional
+  `--commit` / `--pr`.
+  - Verifier is a **shell check** (exit 0 = pass) or an **LLM judge** (`--rubric`).
+  - **Fleet loops** (`--fleet N`): run the same goal on N isolated agents at once.
+  - `--install-hook` writes a Claude Code Stop hook (`hivemux notify -s done`) so
+    each agent turn signals completion and closes the loop.
+
+### Changed
+- **Renamed `amux` → `hivemux`** — the old name collided with an established
+  127★ tool in the same niche (and npm). New repo, binary, state dir
+  (`~/.hivemux`), env (`HIVEMUX_*`), and brand.
+
 ## [0.7.1]
 
 ### Added

@@ -34,7 +34,9 @@ const BUILTIN: Record<string, ModelPrice> = {
 
 function userPricing(): Record<string, ModelPrice> {
   try {
-    const cfg = JSON.parse(readFileSync(path.join(os.homedir(), ".hivemux", "config.json"), "utf8"));
+    const cfg = JSON.parse(
+      readFileSync(path.join(os.homedir(), ".hivemux", "config.json"), "utf8"),
+    );
     return (cfg.pricing ?? {}) as Record<string, ModelPrice>;
   } catch {
     return {};

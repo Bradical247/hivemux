@@ -27,6 +27,12 @@ attach to from anywhere**.
 
 ## Features
 
+- 🔁 **Loop engineering** — `hivemux loop <name> --goal … --check "bun test"` drives an
+  agent through **iterate → verify → fix** cycles until the check passes (or it hits a
+  max-iter / cost / context cap). Verifier = a shell check *or* an LLM judge (`--rubric`).
+  `--fleet N` runs the same goal on N agents at once; `--commit`/`--pr` land it on pass.
+  This is the bit the other tmux runners don't have: agents that **finish the job
+  unattended, gated by a real check**.
 - 🖥️ **Desktop GUI** — `hivemux gui` opens a cmux-style app window: a sidebar of agent
   workspaces (status + notification rings) and an **embedded live terminal** per
   agent (via [ttyd](https://github.com/tsl0922/ttyd)), with merge / PR / broadcast / kill in the toolbar.
@@ -86,6 +92,8 @@ hivemux report-usage [--name n] --model m --in N --out N --ctx N   # push usage 
 hivemux broadcast [names...] -m "..."   # type a prompt into agents' sessions (all if no names)
 hivemux merge <name> [--into b] [--ff]  # merge an agent's branch into the base branch
 hivemux pr <name> [-t title] [--draft]  # push branch + open a GitHub PR (needs gh)
+hivemux loop <name> --goal "..." --check "cmd" [--rubric t] [--max N] [--fleet N] [--commit] [--pr]
+                                     # iterate→verify→fix until the check passes (loop engineering)
 hivemux dash                            # live full-screen TUI (status table)
 hivemux grid                            # tiled, read-only live view of all agents
 hivemux web [--port 7878] [--host 0.0.0.0] [--token t]   # web dashboard, SSE live updates
@@ -180,6 +188,7 @@ State lives in `~/.hivemux/state.json`; worktrees in `~/.hivemux/worktrees/<repo
 - [x] **Socket/JSON API** — daemon control plane with event push (cmux parity).
 - [x] **Merge/PR orchestration** — `hivemux merge` (clean-abort on conflict) and `hivemux pr` (push + `gh pr create`).
 - [x] **`hivemux broadcast`** — send the same instruction to N agents at once.
+- [x] **Loop engineering** — `hivemux loop` (iterate→verify→fix; shell or LLM-judge verifier; fleet loops; cost/ctx-capped).
 - [x] **Web auth** — token required (auto-minted) whenever the dashboard binds beyond loopback.
 - [x] **Single-binary distribution** — `bun build --compile` ships a self-contained executable.
 - [x] **TUI: tiled live agent panes** — `hivemux grid` mirrors every live agent in a tiled, read-only view.

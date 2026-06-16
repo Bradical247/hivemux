@@ -133,6 +133,17 @@ export async function ghAvailable(): Promise<boolean> {
   }
 }
 
+/** Stage everything in the worktree and commit; false if nothing to commit. */
+export async function commitAll(worktree: string, message: string): Promise<boolean> {
+  try {
+    await pexec("git", ["-C", worktree, "add", "-A"]);
+    await pexec("git", ["-C", worktree, "commit", "-m", message]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Open a GitHub PR from `worktree`'s branch via the `gh` CLI; returns the PR URL. */
 export async function createPR(
   worktree: string,

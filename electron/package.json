@@ -1,6 +1,6 @@
 {
   "name": "hivemux-desktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "hivemux — desktop app (Linux): parallel AI coding agents in a native window.",
   "main": "main.js",
   "license": "MIT",

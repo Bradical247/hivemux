@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name("hivemux")
   .description("tmux-backed orchestrator for parallel AI coding agents")
-  .version("1.0.0");
+  .version("1.1.0");
 
 function fail(msg: string): never {
   console.error(`hivemux: ${msg}`);
@@ -195,6 +195,61 @@ program
       console.error(`✗ merge into ${r.into} hit conflicts (aborted — repo left clean):`);
       for (const f of r.conflicts) console.error(`   ${f}`);
       process.exit(1);
+    }),
+  );
+
+program
+  .command("loop <name>")
+  .description("iterate an agent until a verifier passes (loop engineering)")
+  .requiredOption("-g, --goal <text>", "what the agent should achieve")
+  .option("--check <cmd>", "shell verifier — exit 0 = pass")
+  .option("--rubric <text>", "LLM-judge criteria (used when no --check)")
+  .option("--max <n>", "max iterations", "10")
+  .option("--commit", "git commit on pass")
+  .option("--pr", "open a GitHub PR on pass (needs gh)")
+  .option("--install-hook", "install the Claude Code done-signal hook in the worktree")
+  .option("--fleet <n>", "run the same goal on N agents (name = base)")
+  .option("-a, --agent <key>", "agent adapter for --fleet", "claude")
+  .option("-r, --repo <path>", "repo for --fleet (default: cwd)")
+  .action((name: string, opts) =>
+    guard(async () => {
+      const spec = {
+        goal: opts.goal,
+        check: opts.check,
+        rubric: opts.rubric,
+        maxIters: Number(opts.max),
+      };
+      if (!spec.check && !spec.rubric) fail("need --check <cmd> or --rubric <text>");
+      const lopts = {
+        commit: Boolean(opts.commit),
+        pr: Boolean(opts.pr),
+        installHook: Boolean(opts.installHook),
+      };
+      const log = (m: string) => console.log(m);
+      if (opts.fleet) {
+        const res = await mgr.fleetLoop(
+          name,
+          Number(opts.fleet),
+          opts.agent,
+          opts.repo ?? process.cwd(),
+          spec,
+          lopts,
+          log,
+        );
+        for (const r of res) {
+          console.log(
+            `${r.name}: ${r.result.passed ? "✓ passed" : `✗ ${r.result.reason}`} (${r.result.iters} iters)`,
+          );
+        }
+        return;
+      }
+      const r = await mgr.loop(name, spec, lopts, log);
+      console.log(
+        r.passed
+          ? `✓ '${name}' passed in ${r.iters} iters`
+          : `✗ '${name}' stopped: ${r.reason} (${r.iters} iters)`,
+      );
+      if (!r.passed) process.exit(1);
     }),
   );
 

@@ -1,10 +1,13 @@
 // The orchestration core. Every frontend — CLI, daemon/IPC, future TUI and web —
 // calls these functions. No frontend talks to tmux/git/store directly, so there
 // is exactly one source of truth and one place to evolve behavior.
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { agentKeys as _agentKeys, resolveAgent } from "./agents";
 import {
   addWorktree,
   changedFiles,
+  commitAll,
   createPR,
   currentBranch,
   defaultBranch,
@@ -16,6 +19,7 @@ import {
   repoName,
   repoRoot,
 } from "./git";
+import { type LoopResult, type LoopSpec, runLoop } from "./loop";
 import type { RawUsage } from "./pricing";
 import * as store from "./store";
 import { buildGrid, killSession, newSession, sendKeys, sessionExists } from "./tmux";
@@ -238,5 +242,64 @@ export async function usageAll(): Promise<UsageView[]> {
       const overCtx = v.ctxCap != null && usageView.ctxPct != null && usageView.ctxPct >= v.ctxCap;
       return { ...v, usageView, overCost, overCtx };
     }),
+  );
+}
+
+/**
+ * Install a Claude Code Stop hook in the worktree so each agent turn signals
+ * completion to hivemux (`hivemux notify -s done`). This is what closes the loop.
+ */
+export async function installLoopHook(worktree: string): Promise<void> {
+  const dir = path.join(worktree, ".claude");
+  await mkdir(dir, { recursive: true });
+  const settings = {
+    hooks: { Stop: [{ hooks: [{ type: "command", command: "hivemux notify -s done" }] }] },
+  };
+  await writeFile(path.join(dir, "settings.json"), JSON.stringify(settings, null, 2));
+}
+
+export interface LoopOpts {
+  commit?: boolean;
+  pr?: boolean;
+  installHook?: boolean;
+}
+
+/** Run a verify→fix loop on one agent; commit/PR on pass if requested. */
+export async function loop(
+  name: string,
+  spec: LoopSpec,
+  opts: LoopOpts = {},
+  onLog: (m: string) => void = () => {},
+): Promise<LoopResult> {
+  const a = await store.get(name);
+  if (!a) throw new AmuxError(`unknown agent '${name}'`);
+  if (opts.installHook) await installLoopHook(a.worktree);
+  const result = await runLoop(name, spec, onLog);
+  if (result.passed) {
+    if (opts.commit) await commitAll(a.worktree, `hivemux: ${spec.goal}`);
+    if (opts.pr) await openPr(name, { title: spec.goal }).catch(() => {});
+  }
+  return result;
+}
+
+/** Spawn N agents (<base>-1..N) on the same repo and loop the same goal on each. */
+export async function fleetLoop(
+  base: string,
+  count: number,
+  agentKey: string,
+  repo: string,
+  spec: LoopSpec,
+  opts: LoopOpts = {},
+  onLog: (m: string) => void = () => {},
+): Promise<Array<{ name: string; result: LoopResult }>> {
+  const names = Array.from({ length: count }, (_, i) => `${base}-${i + 1}`);
+  for (const name of names) {
+    await create({ name, agent: agentKey, repo, costCap: undefined, ctxCap: undefined });
+  }
+  return Promise.all(
+    names.map(async (name) => ({
+      name,
+      result: await loop(name, spec, opts, (m) => onLog(`[${name}] ${m}`)),
+    })),
   );
 }

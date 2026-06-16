@@ -14,7 +14,9 @@ interface IntegrationConfig {
 
 async function config(): Promise<IntegrationConfig> {
   try {
-    const cfg = JSON.parse(await readFile(path.join(os.homedir(), ".hivemux", "config.json"), "utf8"));
+    const cfg = JSON.parse(
+      await readFile(path.join(os.homedir(), ".hivemux", "config.json"), "utf8"),
+    );
     return (cfg.integrations ?? {}) as IntegrationConfig;
   } catch {
     return {};
