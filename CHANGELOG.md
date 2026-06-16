@@ -19,6 +19,14 @@ All notable changes to hivemux are documented here. Format loosely follows
 - **Demo GIF** now records a real Claude agent: it watches the agent reason live
   (`--watch`), fix a planted bug, and drive the verifier to green, then shows the
   one-line diff. The tape is reproducible (`demo/hivemux.tape` + `demo/setup-repo.sh`).
+- **Tile-view GIF** (`assets/gui-grid.gif`) now shows three real Claude Code TUI
+  sessions fixing a bug in parallel, instead of bare shells.
+
+### Notes
+- An agent runs whatever `cmd` its adapter defines inside an interactive shell, so
+  a shell alias can shadow it (e.g. `alias claude=...`). Override per-agent in
+  `~/.hivemux/config.json` to bypass it, e.g.
+  `"agents": { "claude": { "cmd": "command claude" } }`.
 
 ## [1.4.0]
 

@@ -17,7 +17,7 @@
 
 <p align="center"><img src="assets/gui-mcp.png" alt="hivemux MCP panel" width="820" /><br/><sub>the in-app MCP panel: copy-paste client config and the live tool list, so a conductor agent can drive the fleet</sub></p>
 
-<p align="center"><img src="assets/gui-grid.gif" alt="hivemux tiled view" width="820" /><br/><sub>tile view: every agent's live terminal at once. A tile lights up, blinks, and chimes the moment its agent finishes</sub></p>
+<p align="center"><img src="assets/gui-grid.gif" alt="hivemux tiled view" width="820" /><br/><sub>tile view: every agent's live terminal at once, here three real Claude Code sessions fixing a bug in parallel. A tile lights up, blinks, and chimes the moment its agent finishes</sub></p>
 
 Run many coding agents (Claude Code, Codex, Gemini, Aider, …) at once, each in
 its own isolated git worktree and tmux session, and manage them all from one
