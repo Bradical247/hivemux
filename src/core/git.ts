@@ -13,6 +13,47 @@ export async function repoRoot(dir: string): Promise<string> {
   return stdout.trim();
 }
 
+/** True if `dir` is inside a git work tree. */
+export async function isRepo(dir: string): Promise<boolean> {
+  try {
+    await pexec("git", ["-C", dir, "rev-parse", "--is-inside-work-tree"]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Turn `dir` into a fresh git repo so hivemux works anywhere, not just inside an
+ * existing project. Creates the dir if needed, `git init`s it, and makes an EMPTY
+ * initial commit (a HEAD is all `worktree add` needs). It deliberately does NOT
+ * `git add` existing files, so running hivemux from a populated dir (even $HOME)
+ * never sweeps unrelated files into a commit. Falls back to a bootstrap identity
+ * only if the user has no global git identity configured.
+ */
+export async function initRepo(dir: string): Promise<string> {
+  await mkdir(dir, { recursive: true });
+  await pexec("git", ["-C", dir, "init", "-b", "main"]);
+  const msg = "hivemux: initial commit";
+  try {
+    await pexec("git", ["-C", dir, "commit", "--allow-empty", "-m", msg]);
+  } catch {
+    await pexec("git", [
+      "-C",
+      dir,
+      "-c",
+      "user.name=hivemux",
+      "-c",
+      "user.email=hivemux@localhost",
+      "commit",
+      "--allow-empty",
+      "-m",
+      msg,
+    ]);
+  }
+  return repoRoot(dir);
+}
+
 export function repoName(root: string): string {
   return path.basename(root);
 }

@@ -13,6 +13,7 @@ import {
   currentBranch,
   defaultBranch,
   ghAvailable,
+  initRepo,
   type MergeResult,
   mergeInto,
   pushBranch,
@@ -64,11 +65,17 @@ export async function create(opts: NewAgentOpts): Promise<Agent> {
   const session = sessionName(opts.name);
   if (await sessionExists(session)) throw new AmuxError(`tmux session '${session}' already exists`);
 
+  // Resolve the repo root. If `repo` isn't a git repo yet, init a fresh one (an
+  // empty commit, no file sweep) so hivemux works from any directory. Opt out with
+  // init:false to get the old "must be in a repo" behaviour.
   let root: string;
   try {
     root = await repoRoot(opts.repo);
   } catch {
-    throw new AmuxError("not inside a git repo (use --repo)");
+    if (opts.init === false) {
+      throw new AmuxError("not inside a git repo (pass a repo, or allow git-init)");
+    }
+    root = await initRepo(opts.repo);
   }
 
   const branch = opts.branch ?? `hivemux/${opts.name}`;
@@ -204,6 +211,7 @@ export interface RepoCheck {
   name?: string;
   branch?: string;
   error?: string;
+  init?: boolean; // not a repo yet, but creating an agent here will git-init one
 }
 
 /** Validate a path as a git repo — used by the GUI to preview before creating. */
@@ -212,7 +220,8 @@ export async function checkRepo(dir: string): Promise<RepoCheck> {
     const root = await repoRoot(dir || ".");
     return { valid: true, root, name: repoName(root), branch: await currentBranch(root) };
   } catch {
-    return { valid: false, error: "not inside a git repository" };
+    // not a repo yet — creating an agent here will git-init a fresh one
+    return { valid: false, init: true, name: path.basename(path.resolve(dir || ".")) };
   }
 }
 

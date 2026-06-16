@@ -70,4 +70,5 @@ export interface NewAgentOpts {
   base?: string;
   costCap?: number;
   ctxCap?: number;
+  init?: boolean; // git-init `repo` if it isn't a repo yet (default: true)
 }

@@ -3,6 +3,15 @@
 All notable changes to hivemux are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions are semver.
 
+## [Unreleased]
+
+### Added
+- **Works from any directory.** `hivemux new` (and the GUI's new-agent form) now
+  git-init a fresh repo when the target folder isn't one, so you can start a session
+  anywhere without setting up a repo first. The init is an empty initial commit only
+  (no `git add` sweep), so running from a populated dir, even `$HOME`, never commits
+  unrelated files. Opt out with `hivemux new --no-init`.
+
 ## [1.6.0]
 
 ### Changed

@@ -419,6 +419,7 @@ function checkRepo(){
   repoTimer=setTimeout(async()=>{
     try{const j=await (await api('/api/repo-check?path='+encodeURIComponent(p))).json();
       if(j.valid){st.textContent='✓ '+j.name+' · '+j.branch;st.className='rs ok';repoOK=true;}
+      else if(j.init){st.textContent='✦ will git-init a fresh repo'+(j.name?' ('+j.name+')':' here');st.className='rs ok';repoOK=true;}
       else{st.textContent='✗ '+(j.error||'invalid');st.className='rs err';repoOK=false;}
     }catch{st.textContent='✗ check failed';st.className='rs err';repoOK=false;}
     syncCreate();

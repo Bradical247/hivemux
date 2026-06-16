@@ -60,7 +60,8 @@ New here? Read the [usage guide](docs/GUIDE.md) for task-oriented recipes, or th
   `--fleet N` races N agents; `--commit`/`--pr` land it; `--watch` streams the agent's
   reasoning live; `--ponytail` flips it to lazy-senior-dev mode.
 - 🐝 **Fully isolated agents**: each runs in its own git worktree (own branch, no file
-  collisions) and its own tmux session.
+  collisions) and its own tmux session. Not in a repo? hivemux git-inits a fresh one,
+  so you can start a session from any folder (`--no-init` to opt out).
 - 🖥️ **Desktop + web GUI**: `hivemux gui` opens a cmux-style window: sidebar workspaces,
   embedded live terminals, a toolbar that drives everything, and a **tile view** of
   every agent at once with finish-flash + chime.

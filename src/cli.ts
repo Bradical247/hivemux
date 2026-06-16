@@ -7,6 +7,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { Command } from "commander";
 import { agentKeys } from "./core/agents";
+import { isRepo } from "./core/git";
 import * as mgr from "./core/manager";
 import { loadPolicy } from "./core/policy";
 import { resolveRunner } from "./core/runners";
@@ -82,16 +83,22 @@ program
   .option("-r, --repo <path>", "repo to branch from (default: cwd)")
   .option("-b, --branch <branch>", "branch name (default: hivemux/<name>)")
   .option("--base <ref>", "base ref for the new branch")
+  .option("--no-init", "fail instead of git-init when the folder isn't a repo")
   .option("--cost-cap <usd>", "alert when estimated cost crosses this (USD)")
   .option("--ctx-cap <pct>", "alert when context fill crosses this (%)")
   .action((name: string, opts) =>
     guard(async () => {
+      const repo = opts.repo ?? process.cwd();
+      if (opts.init !== false && !(await isRepo(repo))) {
+        console.log(`no git repo at ${repo}; initializing a fresh one`);
+      }
       const a = await mgr.create({
         name,
         agent: opts.agent,
-        repo: opts.repo ?? process.cwd(),
+        repo,
         branch: opts.branch,
         base: opts.base,
+        init: opts.init,
         costCap: opts.costCap ? Number(opts.costCap) : undefined,
         ctxCap: opts.ctxCap ? Number(opts.ctxCap) : undefined,
       });
