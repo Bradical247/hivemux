@@ -5,8 +5,9 @@
 // (no interactive REPL, no Stop hook), with exact per-turn cost from the JSON.
 // Context carries across iterations via `--resume <session_id>`. The verifier is
 // a shell check (exit 0 = pass) or an LLM judge against a rubric.
-import { execFile } from "node:child_process";
-import { appendFile, mkdir } from "node:fs/promises";
+import { execFile, spawn } from "node:child_process";
+import { createWriteStream } from "node:fs";
+import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -15,6 +16,7 @@ import { applyPonytail } from "./ponytail";
 import { parseTurn, resolveRunner, type TurnOut, turnArgs } from "./runners";
 import { type SandboxMode, wrap } from "./sandbox";
 import * as store from "./store";
+import { sendKeys } from "./tmux";
 
 const pexec = promisify(execFile);
 
@@ -34,6 +36,10 @@ export function runningLoops(): string[] {
 
 export function loopHistoryFile(name: string): string {
   return path.join(os.homedir(), ".hivemux", "loops", `${name}.jsonl`);
+}
+/** Live transcript the agent streams to in watch mode; the tile tails it. */
+export function loopLiveFile(name: string): string {
+  return path.join(os.homedir(), ".hivemux", "loops", `${name}.live`);
 }
 async function appendHistory(name: string, record: Record<string, unknown>): Promise<void> {
   try {
@@ -58,6 +64,8 @@ export interface LoopSpec {
   sandbox?: SandboxMode;
   /** allow network inside the sandbox (else the policy default) */
   network?: boolean;
+  /** stream the agent's output (incl. thinking) into its tmux pane to watch live */
+  watch?: boolean;
 }
 
 export interface Verdict {
@@ -86,6 +94,96 @@ export function decide(
   };
 }
 
+/** Switch a claude argv to realtime streaming so we can mirror its thinking. */
+function streamArgs(args: string[]): string[] {
+  const a = [...args];
+  const i = a.indexOf("--output-format");
+  if (i >= 0 && a[i + 1]) a[i + 1] = "stream-json";
+  else a.push("--output-format", "stream-json");
+  if (!a.includes("--verbose")) a.push("--verbose");
+  if (!a.includes("--include-partial-messages")) a.push("--include-partial-messages");
+  return a;
+}
+
+/** Run a turn streaming, mirroring text + thinking to `liveFile` as it arrives. */
+function streamTurn(
+  bin: string,
+  args: string[],
+  opts: { cwd: string; env: NodeJS.ProcessEnv },
+  liveFile: string,
+  claudeJson: boolean,
+): Promise<TurnOut> {
+  return new Promise((resolve, reject) => {
+    const ch = spawn(bin, args, { cwd: opts.cwd, env: opts.env });
+    const out = createWriteStream(liveFile, { flags: "a" });
+    let buf = "";
+    let result = "";
+    let costUSD = 0;
+    let sessionId: string | undefined;
+    let model = "";
+    let inTok = 0;
+    let outTok = 0;
+    const killT = setTimeout(() => {
+      try {
+        ch.kill("SIGKILL");
+      } catch {}
+    }, 300_000);
+    ch.stdout.on("data", (d: Buffer) => {
+      if (!claudeJson) {
+        out.write(d);
+        result += d.toString();
+        return;
+      }
+      buf += d.toString();
+      const lines = buf.split("\n");
+      buf = lines.pop() ?? ""; // keep the trailing partial line for next chunk
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        let ev: Record<string, unknown>;
+        try {
+          ev = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        const t = ev.type;
+        if (t === "stream_event") {
+          const e = ev.event as { type?: string; delta?: Record<string, string> } | undefined;
+          if (e?.type === "content_block_delta") {
+            const dl = e.delta ?? {};
+            if (dl.type === "text_delta" && dl.text) out.write(dl.text);
+            else if (dl.type === "thinking_delta" && dl.thinking) out.write(dl.thinking);
+          }
+        } else if (t === "assistant") {
+          const content = (ev.message as { content?: Array<Record<string, unknown>> })?.content;
+          if (Array.isArray(content))
+            for (const b of content)
+              if (b.type === "tool_use") out.write(`\n[tool: ${(b.name as string) ?? "?"}]\n`);
+        } else if (t === "result") {
+          result = (ev.result as string) ?? result;
+          costUSD = (ev.total_cost_usd as number) ?? costUSD;
+          sessionId = (ev.session_id as string) ?? sessionId;
+          const mu = ev.modelUsage as Record<string, unknown> | undefined;
+          model = (ev.model as string) ?? (mu ? (Object.keys(mu)[0] ?? "") : model);
+          const u = ev.usage as { input_tokens?: number; output_tokens?: number } | undefined;
+          inTok = u?.input_tokens ?? inTok;
+          outTok = u?.output_tokens ?? outTok;
+        }
+      }
+    });
+    ch.on("error", (e) => {
+      clearTimeout(killT);
+      out.end();
+      reject(e);
+    });
+    ch.on("close", () => {
+      clearTimeout(killT);
+      out.write(`\n[turn done $${costUSD.toFixed(4)}]\n`);
+      out.end();
+      resolve({ result, costUSD, sessionId, model, inTok, outTok });
+    });
+  });
+}
+
 /** One headless agent turn via the configured runner (claude / codex / gemini / …). */
 async function agentTurn(
   runner: string,
@@ -93,9 +191,16 @@ async function agentTurn(
   prompt: string,
   resumeId?: string,
   sandbox?: { mode: SandboxMode; network: boolean; extraBinds: string[] },
+  liveFile?: string,
 ): Promise<TurnOut> {
   const adapter = resolveRunner(runner);
-  const args = turnArgs(adapter, prompt, resumeId);
+  const streaming = Boolean(liveFile);
+  const claudeJson = adapter.parse === "claude-json";
+  // watch mode: switch claude to streaming so its thinking can be mirrored live.
+  const args =
+    streaming && claudeJson
+      ? streamArgs(turnArgs(adapter, prompt, resumeId))
+      : turnArgs(adapter, prompt, resumeId);
   // Confine the agent to its worktree (OS sandbox) when enabled/available.
   const w = sandbox
     ? wrap(adapter.bin, args, {
@@ -108,6 +213,8 @@ async function agentTurn(
   // A depleted ANTHROPIC_API_KEY can shadow a working login — drop it for the turn.
   const env = { ...process.env };
   delete env.ANTHROPIC_API_KEY;
+  if (streaming && liveFile)
+    return streamTurn(w.bin, w.args, { cwd: worktree, env }, liveFile, claudeJson);
   const { stdout } = await pexec(w.bin, w.args, {
     cwd: worktree,
     env,
@@ -186,6 +293,19 @@ export async function runLoop(
   const token = { cancel: false };
   RUNNING.set(name, token);
   await appendHistory(name, { event: "start", goal: spec.goal, maxIters: spec.maxIters });
+  // watch mode: stream the agent's output to a live file and tail it in the
+  // agent's tmux pane, so the grid tile shows it working (incl. thinking).
+  let liveFile: string | undefined;
+  if (spec.watch) {
+    liveFile = loopLiveFile(name);
+    try {
+      await mkdir(path.dirname(liveFile), { recursive: true });
+      await writeFile(liveFile, `hivemux watch · ${name}\ngoal: ${spec.goal}\n\n`);
+      await sendKeys(a0.session, `clear; tail -n +1 -f '${liveFile}'`);
+    } catch {
+      /* best-effort: if the pane is busy, the loop still runs headless */
+    }
+  }
   // Ponytail rides in once on the opening prompt; --resume carries it forward.
   let prompt = applyPonytail(spec.goal, spec.ponytail);
   let resumeId: string | undefined;
@@ -224,7 +344,7 @@ export async function runLoop(
 
     let turn: TurnOut;
     try {
-      turn = await agentTurn(runner, a0.worktree, prompt, resumeId, sandbox);
+      turn = await agentTurn(runner, a0.worktree, prompt, resumeId, sandbox, liveFile);
     } catch (e) {
       await persist(iter, "stopped");
       return finish({

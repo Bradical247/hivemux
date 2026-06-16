@@ -238,6 +238,7 @@ program
   .option("--detach", "run via the daemon so it survives disconnect")
   .option("--ponytail", "lazy-senior-dev mode: bias the agent toward the smallest solution")
   .option("--sandbox <mode>", "OS sandbox for the agent: auto | on | off (default: policy)")
+  .option("--watch", "stream the agent's output (incl. thinking) into its terminal pane")
   .option("-a, --agent <key>", "agent adapter for --fleet", "claude")
   .option("-r, --repo <path>", "repo for --fleet (default: cwd)")
   .action((name: string, opts) =>
@@ -250,6 +251,7 @@ program
         runner: opts.runner,
         ponytail: Boolean(opts.ponytail),
         sandbox: ["auto", "on", "off"].includes(opts.sandbox) ? opts.sandbox : undefined,
+        watch: Boolean(opts.watch),
       };
       if (!spec.check && !spec.rubric) fail("need --check <cmd> or --rubric <text>");
       const lopts = {

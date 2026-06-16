@@ -194,6 +194,7 @@ export const PAGE = /* html */ `<!doctype html>
       <label><input type="checkbox" id="l_commit" /> commit on pass</label>
       <label><input type="checkbox" id="l_pr" /> open PR on pass</label>
       <label title="lazy senior dev: bias toward the smallest solution"><input type="checkbox" id="l_ponytail" /> ponytail</label>
+      <label title="stream the agent live into its terminal (watch it in tile view)"><input type="checkbox" id="l_watch" /> watch</label>
     </div>
     <div class="ferr" id="l_err"></div>
     <div class="row2"><button type="button" id="l_cancel">cancel</button><button type="submit" id="l_start">start</button></div>
@@ -352,7 +353,7 @@ $('loopform').onsubmit=async ev=>{
   ev.preventDefault();
   const goal=$('l_goal').value.trim();if(!goal)return;
   const body={goal,max:Number($('l_max').value)||10,runner:$('l_runner').value||undefined,
-    commit:$('l_commit').checked,pr:$('l_pr').checked,ponytail:$('l_ponytail').checked};
+    commit:$('l_commit').checked,pr:$('l_pr').checked,ponytail:$('l_ponytail').checked,watch:$('l_watch').checked};
   if($('l_vtype').value==='rubric')body.rubric=$('l_rubric').value.trim()||undefined;
   else body.check=$('l_check').value.trim()||undefined;
   if(fleetMode){body.name='fleet-'+Date.now().toString(36);body.fleet=Number($('l_fleet').value)||3;body.repo=$('l_repo').value.trim()||'.';}

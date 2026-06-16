@@ -43,7 +43,9 @@ across disconnects, and lives on a remote box you attach to from anywhere.
   OpenRouter-backed CLIs drop in via config. `--fleet N` runs the same goal on N
   agents at once; `--commit` / `--pr` land it on pass. `--ponytail` flips the agent
   into lazy-senior-dev mode (smallest solution that works), via
-  [Ponytail](https://github.com/DietrichGebert/ponytail).
+  [Ponytail](https://github.com/DietrichGebert/ponytail). `--watch` streams the
+  agent's output (text + thinking) into its terminal pane, so you watch it reason
+  live in the grid instead of staring at a headless black box.
 - 🖥️ **Desktop GUI**: `hivemux gui` opens a cmux-style app window: a sidebar of agent
   workspaces (status + notification rings) and an embedded live terminal per agent
   (via [ttyd](https://github.com/tsl0922/ttyd)). The toolbar drives the full feature
@@ -114,7 +116,7 @@ hivemux report-usage [--name n] --model m --in N --out N --ctx N   # push usage 
 hivemux broadcast [names...] -m "..."   # type a prompt into agents' sessions (all if no names)
 hivemux merge <name> [--into b] [--ff]  # merge an agent's branch into the base branch
 hivemux pr <name> [-t title] [--draft]  # push branch + open a GitHub PR (needs gh)
-hivemux loop <name> --goal "..." --check "cmd" [--rubric t] [--max N] [--fleet N] [--detach] [--commit] [--pr] [--ponytail] [--sandbox auto|on|off]
+hivemux loop <name> --goal "..." --check "cmd" [--rubric t] [--max N] [--fleet N] [--detach] [--commit] [--pr] [--ponytail] [--sandbox auto|on|off] [--watch]
                                      # iterate→verify→fix until the check passes (loop engineering)
 hivemux loop-list / loop-stop <name> / loop-log <name>   # manage detached loops (need the daemon)
 hivemux dash                            # live full-screen TUI (status table)

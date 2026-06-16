@@ -72,6 +72,7 @@ export const TOOLS = [
         commit: bool("git commit on pass"),
         pr: bool("open a PR on pass"),
         ponytail: bool("lazy-senior-dev mode: bias toward the smallest solution"),
+        watch: bool("stream the agent's output into its terminal pane (visible in the grid)"),
       },
       ["goal"],
     ),
@@ -135,6 +136,7 @@ async function callTool(name: string, a: Record<string, unknown>): Promise<unkno
         rubric: a.rubric as string | undefined,
         maxIters: typeof a.max === "number" ? a.max : 10,
         ponytail: Boolean(a.ponytail),
+        watch: Boolean(a.watch),
       };
       if (!spec.check && !spec.rubric) throw new Error("need check or rubric");
       const opts = { commit: Boolean(a.commit), pr: Boolean(a.pr) };

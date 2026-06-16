@@ -26,6 +26,11 @@ All notable changes to hivemux are documented here. Format loosely follows
   prepends the [Ponytail](https://github.com/DietrichGebert/ponytail) lazy-senior-dev
   directive (MIT, Dietrich Gebert) to the agent's opening prompt, biasing it toward
   the smallest solution that works.
+- **`--watch`** (loop option; CLI, GUI checkbox, MCP `start_loop` param): runs the
+  headless agent with `claude` streaming (`--output-format stream-json
+  --include-partial-messages`) and mirrors its text + thinking into the agent's tmux
+  pane, which the tile view tails. You watch the agent reason live instead of seeing
+  a blank shell. Falls back to teeing raw output for non-claude runners.
 - **Sandboxed agents** (inspired by omnigent): looped agents run under an OS sandbox
   (bwrap on Linux, seatbelt on macOS) confined to their worktree plus the repo's `.git`,
   so a headless `acceptEdits` agent can't write outside it. Network stays on by default
